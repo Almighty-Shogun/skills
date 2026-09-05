@@ -4,9 +4,9 @@ description: >-
   Create clean, focused commits from the current repository state. Inspects the
   working tree, groups changes by atomic intent and reviewability, proposes a
   commit plan, stages narrowly, validates each staged group before committing,
-  and asks before pushing. Uses only feat, fix, chore, and docs commit types by
-  default. Never creates release/version commits or performs destructive Git
-  operations.
+  and asks before pushing. Uses only feat, fix, improvement, chore, and docs
+  commit types by default. Never creates release/version commits or performs
+  destructive Git operations.
 argument-hint: "[--auto-commit] [--auto-push] [--auto-all]"
 ---
 
