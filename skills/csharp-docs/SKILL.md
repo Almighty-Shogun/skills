@@ -20,7 +20,6 @@ Author and update C# XML documentation.
 
 This skill governs `///` XML documentation, not ordinary explanatory comments. A general "avoid comments unless needed" rule does not suppress XML API documentation where the project documents its members.
 
-
 ## Modes
 
 ### Default: author/update
@@ -175,6 +174,10 @@ Documentation should add information a reader cannot reliably infer from the sig
 
 These are not quotas. Include detail only when the implementation supports it.
 
+A member whose name, type, and attributes already state everything true is finished with one short sentence.
+
+A short block is correct when there is nothing more verifiable to say. Do not reach into a consumer for depth the member itself does not have; documentation borrowed from elsewhere is the failure this standard is most likely to produce, because it reads exactly like verified prose.
+
 ## Cross-file promises
 
 Distinguish local facts from promises about other code.
@@ -190,6 +193,31 @@ depends on another component.
 Open and verify that component before writing the claim.
 
 When useful, point to the enforcing type/member with `<see cref="..."/>` so the next reader can follow the guarantee.
+
+## Whose contract is it
+
+Before writing a sentence about a member, ask whether it would need editing if a different type changed.
+
+If it would, the sentence documents that other type. Put it there, and reference it from here with `<see cref="..."/>` when the reader needs the pointer.
+
+Duplicating another member's contract creates two copies of one fact in two files, with nothing keeping them in step. The copy that does not sit next to the behavior is the one that goes stale, and no build reports it.
+
+### Data carriers
+
+A DTO, request, response, options object, or entity property carries a value. It does not perform behavior.
+
+Document:
+- what the value is;
+- the constraints that live on the property itself: validation attributes, format, allowed values, nullability, whether it is required.
+
+Do not document:
+- what a service does with the value once it receives it;
+- the conditions under which a consumer rejects it;
+- the order in which another member validates it.
+
+That behavior belongs on the member performing it, where it can be checked against an implementation.
+
+Where the type as a whole has a contract worth stating, such as which rules an endpoint enforces and which it leaves to the caller, state it once in the type's own `<summary>` rather than repeating a fragment of it on every property.
 
 ## Exceptions
 
