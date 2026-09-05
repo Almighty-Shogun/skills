@@ -2,7 +2,6 @@
 name: bughunt
 description: Proactively inspect a repository for genuine, reproducible bugs. Verify each credible candidate independently, then either write concise local bug reports or prepare GitHub issues for explicit user approval. Never fix bugs or research solutions.
 argument-hint: "[--report | --github] [--scope <scope>] [--limit <n>]"
-disable-model-invocation: true
 ---
 
 # Bughunt

@@ -2,7 +2,6 @@
 name: fix-pr
 description: Diagnose and fix GitHub Actions failures on a pull request. Resolve the PR, group failing checks by root cause, verify each failure, show a concise diagnosis and proposed fix for user approval, apply approved local changes through isolated sub-agents, validate independently, and never commit or push automatically.
 argument-hint: "[<number-or-url>]"
-disable-model-invocation: true
 ---
 
 # Fix PR

@@ -11,7 +11,6 @@ description: >-
   stale cross-file claims. Never change implementation code merely to make
   documentation true.
 argument-hint: "[path ...] [--verify [--fix]]"
-disable-model-invocation: true
 ---
 
 # C# Docs

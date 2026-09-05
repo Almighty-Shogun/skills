@@ -2,7 +2,6 @@
 name: plan-implementation
 description: Produce an implementation-ready, repository-grounded plan for an already-understood change without modifying code. Reuses relevant design/research artifacts, identifies exact files and symbols, sequences changes, and optionally persists the plan with --save.
 argument-hint: "[--save] <change to plan>"
-disable-model-invocation: true
 ---
 
 # Implementation Plan

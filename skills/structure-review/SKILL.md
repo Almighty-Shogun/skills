@@ -2,7 +2,6 @@
 name: structure-review
 description: Review a repository or scoped area for structural and architectural problems and improvement opportunities. Use repository structure, meaningful Git history, dependency boundaries, and existing architectural decisions to produce an evidence-based Markdown review. Analysis only; never implement changes.
 argument-hint: "[--scope <scope>]"
-disable-model-invocation: true
 ---
 
 # Structure Review

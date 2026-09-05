@@ -2,7 +2,6 @@
 name: repository-research
 description: Investigate how a repository currently behaves without modifying it. Traces implementations, known failures, extension points, tests, configuration, and relevant history; distinguishes confirmed facts from inference; and optionally persists findings with --save.
 argument-hint: "[--save] [scope or question]"
-disable-model-invocation: true
 ---
 
 # Repository Research

@@ -2,7 +2,6 @@
 name: source-research
 description: Research technical questions against authoritative external sources using an isolated research sub-agent. Supports --quick and --deep modes, infers the mode when omitted, persists concise source-backed findings to .research/<topic>.md, and never implements changes.
 argument-hint: "[--quick | --deep] <research question>"
-disable-model-invocation: true
 ---
 
 # Source Research

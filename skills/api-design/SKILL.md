@@ -1,7 +1,6 @@
 ---
 name: api-design
 description: Design public and cross-boundary API contracts without implementing them. Covers HTTP/REST, GraphQL, public package interfaces, exported types, component contracts, and service/module boundaries. Produces a concise design artifact under .api-design/, prioritizes repository conventions and compatibility, and leaves implementation to another workflow.
-disable-model-invocation: true
 ---
 
 # API Design

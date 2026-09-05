@@ -2,7 +2,6 @@
 name: respond-pr
 description: Process reviewer feedback on a pull request. Resolve the target PR, surface only unresolved actionable feedback, let the user choose what to address, delegate independent changes to isolated sub-agents, validate the resulting diff, and require approval before posting replies or resolving GitHub threads.
 argument-hint: "[<number-or-url>]"
-disable-model-invocation: true
 ---
 
 # Respond PR

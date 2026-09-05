@@ -7,7 +7,6 @@ description: >-
   with --file, and can regenerate an existing GitHub release with --redo <tag>.
   Read-only for Git; an existing release is edited only after explicit approval.
 argument-hint: "[project] [base-ref] [--file] [--redo <tag>]"
-disable-model-invocation: true
 ---
 
 # Release Notes

@@ -8,7 +8,6 @@ description: >-
   default. Never creates release/version commits or performs destructive Git
   operations.
 argument-hint: "[--auto-commit] [--auto-push] [--auto-all]"
-disable-model-invocation: true
 ---
 
 # Commit

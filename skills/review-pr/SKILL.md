@@ -11,7 +11,6 @@ description: >-
   through GitHub, and posts a comment only when asked. Detailed CI diagnosis
   and fixing belongs to fix-pr.
 argument-hint: "[<number-or-url>] [--comment] [--no-build]"
-disable-model-invocation: true
 ---
 
 # Review PR

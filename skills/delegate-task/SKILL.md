@@ -2,7 +2,6 @@
 name: delegate-task
 description: Token-efficient development workflow using isolated research, implementation, and validation agents. Supports --interactive and --autonomous; otherwise infers the mode from context.
 argument-hint: "[--interactive | --autonomous] <task>"
-disable-model-invocation: true
 ---
 
 # Delegate Task
