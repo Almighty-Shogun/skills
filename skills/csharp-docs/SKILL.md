@@ -310,8 +310,10 @@ Registers
 Deserializes
 Adds
 Gets
-Gets and sets
+Gets or sets
 ```
+
+A read-only property uses `Gets`. A property with a setter uses `Gets or sets`, matching the .NET convention, so the accessor shape is readable without checking the signature.
 
 Never use:
 - imperative voice;
