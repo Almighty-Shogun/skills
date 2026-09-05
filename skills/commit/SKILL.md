@@ -188,6 +188,7 @@ Use only these default types:
 ```text
 feat
 fix
+improvement
 chore
 docs
 ```
@@ -196,8 +197,17 @@ Meaning:
 
 - `feat:` new behavior, public capability, export, or feature.
 - `fix:` correction of broken or incorrect behavior/configuration/workflow.
+- `improvement:` reworking behavior that already worked, without adding a capability or correcting a fault.
 - `docs:` documentation-only changes.
 - `chore:` maintenance, dependencies, lockfiles, formatting, internal cleanup, instructions, skills, or other non-feature/non-fix work.
+
+`feat` and `fix` are the default pair and stay the right answer for most runtime work. Reach for `improvement`, `chore`, or `docs` only when those are more honest:
+
+- Prefer `fix` over `improvement` whenever something was actually wrong.
+- Prefer `feat` over `improvement` whenever anything was added. A rework that introduces one new method is a feature, however small that method is.
+- `chore` is narrow. If the change alters what a consumer can do or what the code does at runtime, it is not a chore.
+
+These types match the branch prefixes and title kinds in the `create-pr` skill, so the commits inside a pull request can carry the same kind as the pull request itself.
 
 Do not use other Conventional Commit types unless explicit repository instructions override this skill.
 
@@ -208,6 +218,7 @@ Examples:
 ```text
 feat: add request validation
 fix: preserve null serialization
+improvement: resolve the audience check during token validation
 docs: document cache configuration
 chore: update repository skills
 ```
