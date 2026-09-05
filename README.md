@@ -32,6 +32,9 @@ Twenty skills, grouped by what they are for.
 | **release** | `/release [project] <major\|minor\|patch\|beta\|stable\|version>` | Cuts one GitHub release from a bump keyword or an explicit version, and lets CI publish. |
 | **release-notes** | `/release-notes [project] [base-ref] [--file] [--redo <tag>]` | Generates evidence-based release notes from a diff, in the standard emoji house format. |
 
+> [!NOTE]
+> The `release` and `release-notes` skills are edited versions from [basmilius/skills](https://github.com/basmilius/skills) to better fit my own needs.
+
 ### 🔍 Code quality
 
 | Skill | Invocation | What it does |
