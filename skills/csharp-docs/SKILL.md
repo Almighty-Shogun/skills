@@ -303,21 +303,27 @@ Do not reflow text beyond what the project's line limit requires.
 
 ## Voice
 
-Summaries use third-person singular:
+Method summaries use third-person singular:
 
 ```text
 Registers
 Deserializes
 Adds
-Gets
-Gets or sets
 ```
 
-A read-only property uses `Gets`. A property with a setter uses `Gets or sets`, matching the .NET convention, so the accessor shape is readable without checking the signature.
+A property summary states what the value is, with no accessor prefix. `Gets`, `Sets`, and `Gets or sets` restate the signature, which already shows the accessors, and they consume the opening of the summary where the value's role belongs.
+
+```csharp
+/// <summary>
+/// The password being replaced.
+/// </summary>
+public required string CurrentPassword { get; set; }
+```
 
 Never use:
 - imperative voice;
 - "This method...";
+- an accessor prefix on a property summary;
 - filler that repeats the member name.
 
 ## Defaults
