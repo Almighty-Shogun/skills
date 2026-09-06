@@ -23,14 +23,14 @@ Twenty skills, grouped by what they are for.
 
 | Skill | Invocation | What it does |
 |---|---|---|
-| **commit** | `/commit [--auto-commit] [--auto-push] [--auto-all]` | Turns a mixed working tree into small commits grouped by intent, proposes the plan, stages narrowly, never amends or force-pushes. |
-| **create-pr** | `/create-pr [fix\|feat\|improvement\|chore\|docs/<slug>]` | Opens a pull request on a new or existing work branch, inferring the branch name from the actual change. |
-| **review-pr** | `/review-pr [<number-or-url>] [--comment] [--no-build]` | Reviews a pull request for bugs and drift from the repository's own instructions, and reports findings without changing anything. |
-| **respond-pr** | `/respond-pr [<number-or-url>]` | Surfaces unresolved reviewer feedback, lets you choose what to address, and answers it. |
-| **fix-pr** | `/fix-pr [<number-or-url>]` | Diagnoses failing GitHub Actions checks, groups them by root cause, and fixes them. |
-| **merge-pr** | `/merge-pr [<number-or-url>] [--no-review] [--comment] [--auto-merge]` | Merges one pull request after checking state, CI and review, then cleans up the branch. |
-| **release** | `/release [project] <major\|minor\|patch\|beta\|stable\|version>` | Cuts one GitHub release from a bump keyword or an explicit version, and lets CI publish. |
-| **release-notes** | `/release-notes [project] [base-ref] [--file] [--redo <tag>]` | Generates evidence-based release notes from a diff, in the standard emoji house format. |
+| [**commit**](skills/commit/SKILL.md) | `/commit [--auto-commit] [--auto-push] [--auto-all]` | Turns a mixed working tree into small commits grouped by intent, proposes the plan, stages narrowly, never amends or force-pushes. |
+| [**create-pr**](skills/create-pr/SKILL.md) | `/create-pr [fix\|feat\|improvement\|chore\|docs/<slug>]` | Opens a pull request on a new or existing work branch, inferring the branch name from the actual change. |
+| [**review-pr**](skills/review-pr/SKILL.md) | `/review-pr [<number-or-url>] [--comment] [--no-build]` | Reviews a pull request for bugs and drift from the repository's own instructions, and reports findings without changing anything. |
+| [**respond-pr**](skills/respond-pr/SKILL.md) | `/respond-pr [<number-or-url>]` | Surfaces unresolved reviewer feedback, lets you choose what to address, and answers it. |
+| [**fix-pr**](skills/fix-pr/SKILL.md) | `/fix-pr [<number-or-url>]` | Diagnoses failing GitHub Actions checks, groups them by root cause, and fixes them. |
+| [**merge-pr**](skills/merge-pr/SKILL.md) | `/merge-pr [<number-or-url>] [--no-review] [--comment] [--auto-merge]` | Merges one pull request after checking state, CI and review, then cleans up the branch. |
+| [**release**](skills/release/SKILL.md) | `/release [project] <major\|minor\|patch\|beta\|stable\|version>` | Cuts one GitHub release from a bump keyword or an explicit version, and lets CI publish. |
+| [**release-notes**](skills/release-notes/SKILL.md) | `/release-notes [project] [base-ref] [--file] [--redo <tag>]` | Generates evidence-based release notes from a diff, in the standard emoji house format. |
 
 > [!NOTE]
 > The `release` and `release-notes` skills are edited versions from [basmilius/skills](https://github.com/basmilius/skills) to better fit my own needs.
@@ -39,28 +39,28 @@ Twenty skills, grouped by what they are for.
 
 | Skill | Invocation | What it does |
 |---|---|---|
-| **bughunt** | `/bughunt [--report\|--github] [--scope <scope>] [--limit <n>]` | Inspects a repository for genuine, reproducible bugs and verifies each candidate before reporting it. |
-| **code-validation** | `/code-validation` | Reviews the current changes against requirements and repository behavior in an isolated agent. |
-| **simplify-code** | `/simplify-code [--scope <scope>] [--report]` | Simplifies existing code while preserving behavior. |
-| **structure-review** | `/structure-review [--scope <scope>]` | Reviews a repository or scoped area for structural and architectural problems. |
-| **api-design** | `/api-design` | Designs public and cross-boundary API contracts without implementing them. |
-| **csharp-docs** | `/csharp-docs [path ...] [--verify [--fix]]` | Writes or verifies C# XML documentation against an accuracy-first standard. |
+| [**bughunt**](skills/bughunt/SKILL.md) | `/bughunt [--report\|--github] [--scope <scope>] [--limit <n>]` | Inspects a repository for genuine, reproducible bugs and verifies each candidate before reporting it. |
+| [**code-validation**](skills/code-validation/SKILL.md) | `/code-validation` | Reviews the current changes against requirements and repository behavior in an isolated agent. |
+| [**simplify-code**](skills/simplify-code/SKILL.md) | `/simplify-code [--scope <scope>] [--report]` | Simplifies existing code while preserving behavior. |
+| [**structure-review**](skills/structure-review/SKILL.md) | `/structure-review [--scope <scope>]` | Reviews a repository or scoped area for structural and architectural problems. |
+| [**api-design**](skills/api-design/SKILL.md) | `/api-design` | Designs public and cross-boundary API contracts without implementing them. |
+| [**csharp-docs**](skills/csharp-docs/SKILL.md) | `/csharp-docs [path ...] [--verify [--fix]]` | Writes or verifies C# XML documentation against an accuracy-first standard. |
 
 ### 🧭 Research and planning
 
 | Skill | Invocation | What it does |
 |---|---|---|
-| **repository-research** | `/repository-research [--save] [scope or question]` | Investigates how a repository behaves without modifying it, separating confirmed facts from inference. |
-| **source-research** | `/source-research [--quick\|--deep] <question>` | Researches a question against authoritative external sources in an isolated agent. |
-| **plan-implementation** | `/plan-implementation [--save] <change to plan>` | Produces a repository-grounded implementation plan without touching code. |
-| **delegate-task** | `/delegate-task [--interactive\|--autonomous] <task>` | Runs research, implementation and validation as isolated agents to keep the main context small. |
+| [**repository-research**](skills/repository-research/SKILL.md) | `/repository-research [--save] [scope or question]` | Investigates how a repository behaves without modifying it, separating confirmed facts from inference. |
+| [**source-research**](skills/source-research/SKILL.md) | `/source-research [--quick\|--deep] <question>` | Researches a question against authoritative external sources in an isolated agent. |
+| [**plan-implementation**](skills/plan-implementation/SKILL.md) | `/plan-implementation [--save] <change to plan>` | Produces a repository-grounded implementation plan without touching code. |
+| [**delegate-task**](skills/delegate-task/SKILL.md) | `/delegate-task [--interactive\|--autonomous] <task>` | Runs research, implementation and validation as isolated agents to keep the main context small. |
 
 ### 📚 Package references
 
-| Skill | Invocation | What it does                                                                                                             |
-|---|---|--------------------------------------------------------------------------------------------------------------------------|
-| **shogun-node** | `/shogun-node [package] <what you want>` | Reference for the `@almighty-shogun/*` npm packages: ownership, APIs, traps, and the installed contract.                 |
-| **shogun-nuget** | `/shogun-nuget [package] <what you want>` | Reference for the `AlmightyShogun.*` NuGet packages: ownership, wiring order, configuration, and the installed contract. |
+| Skill | Invocation | What it does |
+|---|---|---|
+| [**shogun-node**](skills/shogun-node/SKILL.md) | `/shogun-node [package] <what you want>` | Reference for the `@almighty-shogun/*` npm packages: ownership, APIs, traps, and the installed contract. |
+| [**shogun-nuget**](skills/shogun-nuget/SKILL.md) | `/shogun-nuget [package] <what you want>` | Reference for the `AlmightyShogun.*` NuGet packages: ownership, wiring order, configuration, and the installed contract. |
 
 ## 📦 Requirements
 
