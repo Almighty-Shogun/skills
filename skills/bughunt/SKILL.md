@@ -73,7 +73,7 @@ Cheap filtering / known-bug checks
         ↓
 One isolated verification sub-agent per credible candidate
         ↓
-VERIFIED / REJECTED / INCONCLUSIVE
+VERIFIED / BY DESIGN / REJECTED / INCONCLUSIVE
         ↓
 Deduplicate related verified findings
         ↓
@@ -110,7 +110,10 @@ Do not report a bug merely because code:
 - might race;
 - could return null;
 - appears unusual;
-- differs from a preferred style.
+- differs from a preferred style;
+- differs from what you would have written;
+- is not mentioned in the documentation;
+- is not covered by a test.
 
 ## Cheap candidate filtering
 
@@ -132,6 +135,10 @@ When an existing issue describes the same bug:
 
 Avoid spending a full verification sub-agent on a candidate already proven irrelevant.
 
+This is a screen, not the intent check. A candidate that survives it has not been
+shown to be unintended; that question belongs to the verification agent, which
+has the context to answer it.
+
 ## Verification sub-agents
 
 Assign each credible independent candidate to its own sub-agent where practical.
@@ -146,7 +153,11 @@ Candidate C → verification sub-agent C
 
 Each verification agent receives only the context necessary for its candidate.
 
-The verification agent must determine whether the candidate is genuinely incorrect.
+The verification agent must determine two separate things: that the behavior
+happens, and that it was not intended. Proving the first says nothing about the
+second.
+
+### Prove the behavior
 
 Prefer evidence such as:
 - a repeatable failing test;
@@ -162,15 +173,64 @@ Intermittent bugs do not need to reproduce 100% of the time. If behavior is repe
 
 Environment details should be captured only when they materially affect reproduction.
 
+### Establish the expectation it violates
+
+A finding is only a bug if it breaks an expectation that something other than the
+agent's own judgment sets. Cite that source, in this order of preference:
+
+1. a documented contract, specification, or type/API guarantee;
+2. a test asserting the opposite behavior;
+3. a stated invariant, assertion, or schema constraint;
+4. a caller in the repository that visibly breaks on the actual behavior;
+5. an internal contradiction, where two code paths that must agree do not.
+
+"A reasonable user would expect", "this is surprising", and "the obvious intent
+is" are not sources. When no source can be cited, the outcome is INCONCLUSIVE,
+never VERIFIED.
+
+### Check whether it was deliberate
+
+Before concluding, look for evidence that someone chose this behavior:
+- a comment on or near the code explaining it;
+- a test asserting exactly the behavior in question;
+- a configuration key, flag, or option that selects it;
+- the commit or pull request that introduced the exact lines, via `git blame` on
+  them and `git log -S` for the relevant string or symbol, where the project is
+  a Git repository;
+- a changelog, ADR, or release note describing it.
+
+Git history is usually the fastest way to settle this. A line written in a commit
+whose message describes precisely this behavior is deliberate.
+
+Some categories are deliberate often enough that they need a violated contract
+before they can be reported at all:
+- defensive or redundant checks;
+- a deliberate fail-open or fail-closed choice;
+- a swallowed exception carrying a comment;
+- deliberately permissive validation;
+- a tolerated race in a cache or in best-effort work;
+- a parameter left unused to satisfy an interface or signature.
+
 ## Verification outcomes
 
 Every candidate must end in exactly one internal state:
 
 ### VERIFIED
 
-There is sufficient evidence that the behavior is genuinely incorrect.
+The behavior is demonstrated, the expectation it violates is cited from a source
+outside the agent's own judgment, and the intent check turned up nothing showing
+it was chosen. All three are required.
 
 Only verified findings become bug reports or proposed GitHub issues.
+
+### BY DESIGN
+
+The behavior happens, but evidence shows it was chosen: a comment, a test
+asserting it, a flag selecting it, or the commit that introduced it saying so.
+
+Deliberate is not the same as correct, so a by-design finding may still be worth
+a sentence to the user when the evidence of intent is thin or the consequence is
+severe. It is never written up as a bug report or a GitHub issue.
 
 ### REJECTED
 
@@ -189,7 +249,7 @@ Do not report inconclusive candidates as bugs.
 A final compact summary may include counts such as:
 
 ```text
-12 candidates investigated: 4 verified, 6 rejected, 2 inconclusive.
+12 candidates investigated: 3 verified, 5 rejected, 2 by design, 2 inconclusive.
 ```
 
 If an inconclusive candidate is unusually concerning, mention it briefly to the user without presenting it as a verified bug.
@@ -201,7 +261,7 @@ Verification sub-agents must return only a compact handoff.
 Preferred shape:
 
 ```text
-Status: VERIFIED | REJECTED | INCONCLUSIVE
+Status: VERIFIED | BY DESIGN | REJECTED | INCONCLUSIVE
 
 Title:
 <short candidate title>
@@ -211,6 +271,12 @@ Behavior:
 
 Expected:
 <what should happen>
+
+Expectation source:
+<which of the five sources sets it, and where it lives>
+
+Intent check:
+<what was searched for deliberateness, and what it showed>
 
 Reproduction:
 <minimal reproduction>
@@ -330,7 +396,7 @@ Follow these rules for both local reports and GitHub issues:
 When no verified bugs are found:
 - do not create an empty report;
 - tell the user that no bugs could be verified;
-- include only a compact investigated / verified / rejected / inconclusive count when useful.
+- include only a compact investigated / verified / rejected / by design / inconclusive count when useful.
 
 When exactly one verified bug is found:
 
@@ -443,6 +509,7 @@ Useful information:
 - number of candidates investigated;
 - number verified;
 - number rejected;
+- number by design;
 - number inconclusive;
 - paths of created reports, or links/numbers of approved GitHub issues;
 - brief mention of any important known duplicate or concerning inconclusive finding.
@@ -457,7 +524,7 @@ Treat sub-agents as disposable workers.
 - Give each verification agent only the candidate-specific context it needs.
 - Prefer repository state, tests, commands, and diffs over repeated prose descriptions.
 - Keep sub-agent handoffs compact.
-- Keep rejected candidates out of the final output.
+- Keep rejected and by-design candidates out of the final output, beyond their counts.
 - Do not research solutions.
 - Do not repeat logs that can be referenced or rerun.
 - Do not load unrelated repository context into candidate verification.
