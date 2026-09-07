@@ -50,7 +50,11 @@ Natural-language scope is also valid:
 Use bughunt --report and focus on authentication.
 ```
 
-If neither `--report` nor `--github` is supplied, ask the user which mode they want **before analyzing the repository**.
+If neither `--report` nor `--github` is supplied, determine whether the target is a Git
+repository **before analyzing it**:
+
+- when it is not a Git repository, use `--report`;
+- otherwise ask the user which mode they want.
 
 If both are supplied, ask the user to choose one before proceeding.
 
