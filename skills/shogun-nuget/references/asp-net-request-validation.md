@@ -130,6 +130,12 @@ dependencies even though the validator itself cannot.
 **`AddAspNetValidation()` scans the calling assembly.** Validators and custom
 rules in another assembly need the explicit overload.
 
+**`RuleFor` only accepts a property read straight off the request parameter.** A
+boxing or numeric conversion around it is unwrapped, but a nested path such as
+`request => request.Address.City`, a method call, an indexer, or any computed
+value throws `ArgumentOutOfRangeException` naming the expression. Validate a
+nested object with its own rule rather than reaching through it.
+
 **Registration changes MVC behavior**, deliberately: `ThrowOnBadRequest` on
 route handlers, an `InvalidModelStateResponseFactory` that renders this
 package's body, `SuppressImplicitRequiredAttributeForNonNullableReferenceTypes`,

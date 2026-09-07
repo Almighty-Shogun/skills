@@ -117,9 +117,11 @@ throws `InvalidOperationException`.
 `ReadTimeout` bounds handling one; both are seconds, and hitting the idle one
 simply closes the connection.
 
-**`MaxPayloadBytes` bounds the listener, and the client has its own fixed
-one-megabyte cap.** A declared length outside the accepted range is a protocol
-error, not a refusal.
+**`MaxPayloadBytes` bounds the listener, and the client caps its own reads
+separately.** The client's cap is the `maxPayloadBytes` constructor argument,
+one megabyte by default, so raising the listener's setting alone does not let a
+client read a larger response. A declared length outside the accepted range is a
+protocol error, not a refusal.
 
 **`MaxConcurrentConnections` is a semaphore**, so past the limit new connections
 wait rather than being rejected.
@@ -139,7 +141,8 @@ Authoring: `RemoteCommand<T>` with `HandleCommandAsync`,
 `RemoteCommandAttribute(name, description)`, `ICommandResponse.WriteAsync<T>`.
 
 Runtime: `IRemoteCommandHandler` (`StartAsync`, `Stop`), `RemoteCommandClient`
-(`SendAsync<TMessage, TResponse>`, `SendAsync<TMessage>`, `DisposeAsync`).
+(`host`, `port`, `secret = null`, `maxPayloadBytes = 1048576`;
+`SendAsync<TMessage, TResponse>`, `SendAsync<TMessage>`, `DisposeAsync`).
 
 Protocol: `RemoteCommandPayload`, `RemoteCommandResponse`,
 `RemoteCommandRefusal`.

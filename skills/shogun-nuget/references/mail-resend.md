@@ -40,6 +40,10 @@ Placeholders the base template can use: `{{DocumentTitle}}`, `{{Title}}`,
 `{{IgnoreTextHtml}}`, plus one per key in `AdditionalValues`. The paragraph file
 uses `{{Paragraph}}`; the button file `{{ButtonUrl}}` and `{{ButtonLabel}}`.
 
+`{{BodyHtml}}` and `{{ButtonsHtml}}` are substituted last, after every other
+placeholder including `AdditionalValues`, so a placeholder that appears inside
+paragraph or button content is left alone rather than expanded.
+
 ## Writing a mail
 
 ```csharp
@@ -67,9 +71,12 @@ HTML and blank-line separated text, `Buttons` become buttons in HTML and
 
 ## Traps
 
-**Every value is HTML encoded.** Paragraphs, title, greeting, brand name and the
-`AdditionalValues` entries are encoded on the way in, so a template cannot inject
-markup through them; put markup in the HTML files instead.
+**Every value is HTML encoded, except `Template:IgnoreText`.** Paragraphs, title,
+greeting, brand name and the `AdditionalValues` entries are encoded on the way
+in, so a template cannot inject markup through them; put markup in the HTML files
+instead. `IgnoreText` is substituted into `{{IgnoreTextHtml}}` as markup so it can
+carry a link, which makes it a configuration value you control, not one to fill
+from user input. The text body strips its tags and decodes the entities.
 
 **URLs must be absolute `http`, `https` or `mailto`.** `MailButton` throws
 `ArgumentException` on anything else, and a `LogoUrl` or `AppUrl` that fails the
@@ -120,5 +127,5 @@ Models: `MailOptions` (`To`, `Cc`, `Bcc`, `ReplyTo`, `Attachments`,
 
 Configuration: `EmailSettings` (`ApiToken`, `FromEmail`, `FromName`,
 `BrandName`, `LogoUrl`, `AppUrl`, `Links`, `Template`, computed `From`),
-`EmailTemplateSettings` (`CopyrightTextTemplate`, `FooterLinkText`,
+`EmailTemplateSettings` (`CopyrightText`, `FooterLinkText`,
 `IgnoreText`).

@@ -34,7 +34,7 @@ prefix is dropped below.
 | `AspNet.Core` | the one error body every web package writes, exception mapping vocabulary, request metadata, CORS, Cloudflare forwarded headers | `AspNet.Localization` |
 | `AspNet.RequestValidation` | attribute, fluent and custom request rules, reported together as one `422` | `AspNet.Core`, `AspNet.Localization` |
 | `AspNet.Auth` | JWT bearer authentication, permission policies, refresh-token cookies, host to audience resolution | `Utils`, `AspNet.Core`, `AspNet.Localization` |
-| `AspNet.Auth.Credentials` | password login, refresh sessions with rotation, reset, lockout, TOTP two-factor, EF Core storage | `Utils`, `AspNet.Core`, `AspNet.Auth`, `AspNet.Localization`, `AspNet.RequestValidation` |
+| `AspNet.Auth.Credentials` | password login with a two-step two-factor handoff, refresh sessions with rotation, password reset, email verification and address change, lockout, TOTP two-factor, EF Core storage | `Utils`, `AspNet.Core`, `AspNet.Auth`, `AspNet.Localization`, `AspNet.RequestValidation` |
 | `AspNet.MaintenanceMode` | file-backed maintenance windows and the middleware that enforces them | `Utils`, `AspNet.Core` |
 | `ConsoleCommands` | attribute-discovered commands dispatched from a console input loop | `Utils` |
 | `RemoteCommands` | length-prefixed JSON over TCP, listener and client | `Utils` |
@@ -157,7 +157,8 @@ stricter than this skill:
 - Every member carries a full XML documentation block, checked by the build with
   `GenerateDocumentationFile` on and no `NoWarn`.
 - `max_line_length` is 140 columns, counting the `///` prefix.
-- `<since>` records when a member was added, never when it changed.
+- `<since>` records when a member was added, never when it changed. A new member
+  gets `<since>Unreleased</since>` until the release process replaces it.
 - Documentation pages under `docs/` are written by hand after reading the source.
 - Packages are versioned together, and CI publishes on a GitHub release.
 
@@ -231,6 +232,7 @@ monorepo the checks are:
 
 ```sh
 dotnet build packages/<Package>/<Package>.csproj --no-incremental
+awk 'length($0)>140 {print FILENAME":"FNR}' packages/<Package>/*.cs
 dotnet build packages.sln
 bun run docs:build
 ```

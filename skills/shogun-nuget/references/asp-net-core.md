@@ -123,6 +123,12 @@ registered or the host fails to resolve them.
 **Anything registered after `AddExceptionHandling` is dead code.** Its fallback
 answers every exception whose response has not started.
 
+**A message the resolver cannot produce degrades instead of failing.**
+`IMessageResolver.Resolve` returns the key itself when no message matches, and
+the 500 fallback handler wraps its own resolve in a `try`, writing the literal
+`http-error.500` as the description if that throws, so a body still goes out
+while an exception is being handled.
+
 **`AddAuth` and `AddAuthCredentials` register their own handlers by default.**
 Call them before `AddExceptionHandling`, or pass
 `registerExceptionHandler: false` and register your own.

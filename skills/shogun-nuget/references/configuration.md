@@ -74,17 +74,26 @@ Bound by `AddAuthCredentials`.
   "AuthCredentials": {
     "AbsoluteSessionLifetimeDays": 30,
     "PasswordResetMinutes": 60,
+    "EmailVerificationMinutes": 1440,
     "ForgotPasswordMinimumMilliseconds": 200,
     "Lockout": { "Enabled": false, "MaxFailedAttempts": 5, "DurationMinutes": 15 },
-    "TwoFactor": { "Issuer": null, "RecoveryCodeCount": 10, "Digits": 6, "PeriodSeconds": 30, "PendingSecretMinutes": 10 }
+    "TwoFactor": {
+      "Issuer": null,
+      "RecoveryCodeCount": 10,
+      "Digits": 6,
+      "PeriodSeconds": 30,
+      "PendingSecretMinutes": 10,
+      "ChallengeMinutes": 5
+    }
   }
 }
 ```
 
 | Key | Default | Notes |
 | --- | --- | --- |
-| `AbsoluteSessionLifetimeDays` | `30` | caps rotation from the session's creation; null means no cap |
+| `AbsoluteSessionLifetimeDays` | `30` | caps a session's expiry from its creation, at sign-in and at every rotation, and refuses a refresh past it; null means no cap |
 | `PasswordResetMinutes` | `60` | reset-token lifetime |
+| `EmailVerificationMinutes` | `1440` | verification and address-change token lifetime |
 | `ForgotPasswordMinimumMilliseconds` | `200` | minimum duration of a forgot-password call |
 | `Lockout:Enabled` | `false` | lockout is off unless turned on |
 | `Lockout:MaxFailedAttempts` | `5` | |
@@ -94,6 +103,7 @@ Bound by `AddAuthCredentials`.
 | `TwoFactor:Digits` | `6` | 6 to 8 |
 | `TwoFactor:PeriodSeconds` | `30` | 15 to 120 |
 | `TwoFactor:PendingSecretMinutes` | `10` | 1 to 60 |
+| `TwoFactor:ChallengeMinutes` | `5` | lifetime of the login challenge handed out when two-factor is enrolled |
 
 ## Maintenance
 
@@ -190,7 +200,7 @@ Bound by `AddResendEmail`.
     "AppUrl": "https://example.com",
     "Links": {},
     "Template": {
-      "CopyrightTextTemplate": "© {app_name}",
+      "CopyrightText": "© {app_name}",
       "FooterLinkText": "{app_name}",
       "IgnoreText": ""
     }

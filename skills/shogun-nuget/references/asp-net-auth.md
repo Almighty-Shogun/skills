@@ -39,8 +39,13 @@ Every token carries an audience and the audience is always validated. Two shapes
 audience list throws when a `Hosts` entry has a blank value, or when `Hosts` is
 empty and `DefaultApp` is unset.
 
-Every policy the app resolves gains an audience requirement, so an otherwise
-valid token minted for another app is rejected on a host that maps elsewhere.
+In a scoped setup the app audience is checked while the bearer token is
+validated, not during authorization. `OnTokenValidated` resolves the app from
+the request host and fails authentication when the host maps to nothing, or when
+no audience claim on the token matches that app. So a token minted for another
+app is rejected on a host that maps elsewhere, and the rejection is a 401 from
+the JWT bearer handler rather than a 403. An unscoped setup skips the check
+entirely; standard audience validation against `ValidAudiences` runs either way.
 
 ## Permissions
 
@@ -68,8 +73,9 @@ builder.Services
 ```
 
 `AddAuth` binds `Auth`, adds the JWT bearer scheme and authorization, replaces
-`IAuthorizationPolicyProvider`, registers the permission and audience handlers,
-and by default registers its exception handler. Keep it before
+`IAuthorizationPolicyProvider`, registers the permission handler, wires the app
+audience check onto `OnTokenValidated`, and by default registers its exception
+handler. Keep it before
 `AddExceptionHandling`, or pass `registerExceptionHandler: false`.
 
 ### Issue a token pair
@@ -96,7 +102,10 @@ host at startup with an explicit message.
 
 **A scoped setup rejects an unmapped host.** `IAppHostResolver.Resolve()` throws
 `UnknownAppException` when `Hosts` is non-empty and the request host matches
-nothing, including `localhost` when `LocalhostApp` is unset.
+nothing, including `localhost` when `LocalhostApp` is unset. The token-validation
+check calls `TryResolveAppFromHost` instead, so an unmapped host on a request
+carrying a token fails authentication with a 401 rather than raising that
+exception.
 
 **`TryResolve` returns true with a null app in the unscoped case.** True means
 "resolution succeeded", not "an app was found", so check the out parameter.
