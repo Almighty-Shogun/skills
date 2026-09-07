@@ -376,6 +376,11 @@ Use it for:
 
 Do not use `<remarks>` to praise the design or assert vague qualities such as "clean", "maintainable", or "flexible".
 
+Do not record provenance: how a defect was observed, what a test run measured,
+which environment or third-party version it failed under. Those are facts about
+an investigation, not properties of the code, and the accuracy rule does not
+catch them because the sentence is true.
+
 ## Extension blocks
 
 Document the receiver of an `extension` block with a `<param>` on the block itself.
@@ -413,6 +418,31 @@ If the documented behavior appears preferable:
 - treat the behavior change as a separate development task.
 
 A documentation pass does not silently resolve design disagreements.
+
+## A defect is not a design
+
+A doc block describes what a member does. It is never where a defect is
+recorded, and a bug report must not leak into one.
+
+A verified sentence can still be the wrong sentence. When documenting a member
+reveals behavior no one chose, do not write the sentence that legitimizes it.
+Report the defect and leave the block short.
+
+A doc block is a contract surface. Describing broken behavior there in the
+register of intended behavior turns a bug into a specification, and the next
+reader, including a later bug hunt, has no way to tell the two apart.
+
+Signals that a sentence is doing this:
+- it explains why something can never work;
+- it explains why a value never arrives;
+- it explains why a supported-looking input is refused;
+- it reads as rationale for behavior a caller would report as broken.
+
+A short block is the correct outcome. Silently documenting the defect is not,
+and neither is silently dropping it: the report to the user is required.
+
+This mirrors **Code is the fact**. That rule stops documentation dictating code.
+This one stops code dictating a contract nobody chose.
 
 ## Build verification
 
@@ -481,6 +511,10 @@ For each documented member, read the XML block and the implementation it sits on
 
 Judge each semantic claim independently.
 
+Ask two questions of each claim, not one: is it true of the code, and does it
+describe something anyone intended. A sentence can pass the first and fail the
+second.
+
 Possible verdicts:
 
 | Verdict | Meaning |
@@ -489,6 +523,7 @@ Possible verdicts:
 | `FALSE` | Contradicted by the code. |
 | `STALE` | Describes behavior that no longer exists. |
 | `JUSTIFICATION` | Argues that the design is good without conveying a checkable behavior/constraint. |
+| `UNINTENDED` | True of the code, but describes a defect in the register of designed behavior. |
 | `UNVERIFIABLE` | The codebase cannot settle a checkable claim. |
 | `UNCHECKED` | Verification did not inspect what the claim depends on. |
 
