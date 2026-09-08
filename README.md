@@ -39,7 +39,7 @@ Twenty skills, grouped by what they are for.
 
 | Skill | Invocation | What it does |
 |---|---|---|
-| [**bughunt**](skills/bughunt/SKILL.md) | `/bughunt [--report\|--github] [--scope <scope>] [--limit <n>]` | Inspects a repository for genuine, reproducible bugs and verifies each candidate before reporting it. |
+| [**bughunt**](skills/bughunt/SKILL.md) | `/bughunt [--report\|--github] [--solution] [--scope <scope>] [--limit <n>]` | Inspects a repository for genuine, reproducible bugs and verifies each candidate before reporting it. |
 | [**code-validation**](skills/code-validation/SKILL.md) | `/code-validation` | Reviews the current changes against requirements and repository behavior in an isolated agent. |
 | [**simplify-code**](skills/simplify-code/SKILL.md) | `/simplify-code [--scope <scope>] [--report]` | Simplifies existing code while preserving behavior. |
 | [**structure-review**](skills/structure-review/SKILL.md) | `/structure-review [--scope <scope>]` | Reviews a repository or scoped area for structural and architectural problems. |

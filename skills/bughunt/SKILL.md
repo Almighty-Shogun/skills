@@ -1,7 +1,7 @@
 ---
 name: bughunt
-description: Proactively inspect a repository for genuine, reproducible bugs. Verify each credible candidate independently, then either write concise local bug reports or prepare GitHub issues for explicit user approval. Never fix bugs or research solutions.
-argument-hint: "[--report | --github] [--scope <scope>] [--limit <n>]"
+description: Proactively inspect a repository for genuine, reproducible bugs. Verify each credible candidate independently, then either write concise local bug reports or prepare GitHub issues for explicit user approval. Never fix bugs. Research fix options only with --solution, which requires --report and changes no code.
+argument-hint: "[--report | --github] [--solution] [--scope <scope>] [--limit <n>]"
 ---
 
 # Bughunt
