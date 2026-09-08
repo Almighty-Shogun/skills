@@ -16,7 +16,7 @@ It must:
 - verify credible candidates with reproducible evidence;
 - isolate verification work across sub-agents when multiple candidates exist;
 - report only verified bugs;
-- avoid solution research and implementation.
+- avoid solution research and implementation, unless `--solution` is set.
 
 It must not fix bugs.
 
@@ -34,6 +34,7 @@ Optional:
 ```text
 --scope <scope>
 --limit <n>
+--solution
 ```
 
 Examples:
@@ -42,6 +43,7 @@ Examples:
 bughunt --report
 bughunt --github --scope src/auth
 bughunt --report --scope packages/common --limit 5
+bughunt --report --solution --scope packages/common
 ```
 
 Natural-language scope is also valid:
@@ -57,6 +59,11 @@ repository **before analyzing it**:
 - otherwise ask the user which mode they want.
 
 If both are supplied, ask the user to choose one before proceeding.
+
+`--solution` adds a `## Fix options` section to each report file. It requires
+`--report`, because there is no file to put that section in otherwise. When it is
+supplied without `--report`, refuse and say why; do not silently report, and do
+not silently fix. It never grants permission to change code.
 
 `--limit <n>` means the maximum number of **verified findings returned**. It must not mean "stop after investigating N candidates."
 
@@ -306,11 +313,12 @@ If the root cause becomes apparent naturally while proving the bug, record it co
 
 Do not perform additional investigation solely to discover the root cause.
 
-Do not investigate possible solutions.
+Do not investigate possible solutions, unless `--solution` is set.
 
-Bughunt stops at verified diagnosis.
+Bughunt stops at verified diagnosis, and with `--solution` at options a reader can
+choose between.
 
-## No solution research
+## No solution research by default
 
 Do not:
 - design fixes;
@@ -319,6 +327,10 @@ Do not:
 - implement code changes;
 - add permanent regression tests;
 - create fix branches or pull requests.
+
+`--solution` lifts the first two, and only inside the `## Fix options` section of
+a report file. See **Fix options**. Everything else on that list still holds, with
+or without the flag.
 
 If the user later wants a fix, another workflow such as `delegate-task` should handle it.
 
@@ -386,7 +398,8 @@ Follow these rules for both local reports and GitHub issues:
 - Use a short numbered reproduction list when it is clearer than prose.
 - Include relevant environment or compatibility details only when they affect reproduction.
 - Include the root cause only when it became apparent naturally during verification.
-- Do not include rejected hypotheses, investigation history, raw logs, possible fixes, validation narration, or unrelated implementation details.
+- Do not include rejected hypotheses, investigation history, raw logs, validation narration, or unrelated implementation details.
+- Do not include possible fixes, except inside the `## Fix options` section that `--solution` adds.
 - Do not add headings, checklists, or boilerplate sections unless they materially improve clarity.
 - Do not add tool attribution or generated-by text.
 - Do not narrate that the report is concise, focused, scoped, minimal, or well-structured.
@@ -423,6 +436,9 @@ Example:
 
 Do not create an index file unless the number of reports is large enough that navigation genuinely benefits from one.
 
+With `--solution`, every report file also carries a `## Fix options` section. See
+**Fix options**.
+
 ### Existing report safety
 
 Do not blindly overwrite:
@@ -434,6 +450,62 @@ If a matching report already exists:
 - otherwise use a unique descriptive filename.
 
 Preserve unrelated existing report content.
+
+## Fix options
+
+Only with `--solution`, and only alongside `--report`.
+
+Append a `## Fix options` section to each report file, after the reproduction and
+the severity line, before the file and line list.
+
+Shape:
+
+1. An opening line stating what is **not** at stake, so the reader knows the
+   blast radius before reading the options.
+2. Two to four options, each led by a bolded phrase naming the strategy, not the
+   letter alone: `**Option A, bind the tail.**` The letter is for citing it
+   later; the phrase is what makes the list skimmable.
+3. Each option states what to change and roughly where, what it buys, and what it
+   costs or fails to cover. The cost is not optional.
+4. The do-nothing option wherever one exists, usually "keep the behavior and
+   correct the documentation instead". A documentation defect wearing a bug
+   costume is usually caught here.
+5. A `Recommendation:` line picking one, why in a sentence, and the condition
+   under which a different option is right instead.
+6. A falsification paragraph naming which doc blocks and documentation pages each
+   option would make untrue, with line numbers.
+7. A trailing answer block for the reader: the line `Desired solution:` followed
+   by an empty fenced block containing `// answer`.
+
+The answer is freeform. A letter, or prose describing a different approach
+entirely, are both valid. Do not constrain it to a letter.
+
+### Rules
+
+- Options are analysis. `--solution` never edits source, never creates a branch,
+  and never implies permission to fix.
+- Options stay scoped to the defect. Redesigning the surrounding code is still
+  out of scope.
+- Do not pad to a count. Two real options beat four where two are filler.
+- Options must be genuinely different strategies, not one strategy at three sizes.
+- Recommend, do not hedge. Listing options without picking one pushes the work
+  back to the reader.
+- Say when an option is a deliberate half-measure and what it leaves unfixed.
+
+### Options are not findings
+
+A finding is verified. An option is reasoned.
+
+Every claim about the **current** code holds to the same standard as the finding
+itself. Every claim about how a **fix** would behave is a prediction, with no fix
+yet to verify it against.
+
+Do not write predictions in the register of verified behavior, and never present
+the section as a guarantee that the recommended option is safe. A chosen option
+can introduce a regression the option paragraph did not anticipate.
+
+Write the options after verification concludes, never inside a verification
+sub-agent, so the verification standard stays uncontaminated by solution work.
 
 ## `--github`
 
