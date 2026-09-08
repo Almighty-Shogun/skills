@@ -9,7 +9,7 @@ description: >-
   semantics, escaping exceptions, remarks, inheritdoc, cref usage, extension
   receivers, wrapping, author/since metadata, XML-doc compiler failures, and
   stale cross-file claims. Never change implementation code merely to make
-  documentation true.
+  documentation true, and never document a defect as designed behavior.
 argument-hint: "[path ...] [--verify [--fix]]"
 ---
 
