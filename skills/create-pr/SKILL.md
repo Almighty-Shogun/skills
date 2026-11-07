@@ -1,155 +1,97 @@
 ---
 name: create-pr
 description: >-
-  Open a GitHub pull request for the current repository, on a new or existing
-  work branch. Use when the user asks to create, open, or raise a PR or pull
-  request, asks to push work up for review, optionally passing a fix/*, feat/*,
-  improvement/*, chore/*, or docs/* branch name, or asks to reuse the current
-  work branch. Resolves the
-  repository and default branch, validates or infers the branch name from the
-  actual change, states the intended file scope, delegates staging and commits to
-  the commit skill, writes a repository-appropriate title and body from
-  repository instructions, and runs gh pr create only after explicit approval. It
-  never merges, force-pushes, creates release tags or version commits, or runs
-  publish commands.
+  Open a GitHub pull request for the current repository on a new or existing
+  fix/, feat/, improvement/, chore/, or docs/ work branch. Infers the branch
+  name from the actual change, states the file scope, delegates staging and
+  commits to the commit skill, writes the title and body from repository
+  instructions, and runs gh pr create only after approval. Never merges,
+  force-pushes, tags, or publishes.
 argument-hint: "[fix/<slug> | feat/<slug> | improvement/<slug> | chore/<slug> | docs/<slug>]"
 disable-model-invocation: true
 ---
 
 # Create PR
 
-Create a focused pull request for the current GitHub repository. The skill works
-from any directory inside the repository and relies on the `commit` skill for
-staging and commit creation.
+Create a focused pull request for the current GitHub repository, from any
+directory inside it, using the `commit` skill for staging and commits.
 
-## The contract
+## Contract
 
-This skill's remote mutations are exactly two, both gated:
-
-1. The commits and push performed **by the `commit` skill** in step 4, under that
-   skill's own confirmation gates.
-2. `gh pr create` in step 6, which must not run before the user approves the
-   proposed title and body in step 5.
-
-It never merges a PR, force-pushes, rebases, resets, creates release tags or
-version commits, or runs publish commands.
-
-## Invocation
-
-Argument forms, shown without the harness invocation prefix:
-
-```text
-<no argument>
-fix/example-bug
-feat/example-feature
-```
+Two remote mutations, both gated: the commits and push made **by the `commit`
+skill** under its own confirmations, and `gh pr create`, which runs only after
+the user approves the title and body. Never merge, force-push, rebase, reset,
+tag, create version commits, or publish.
 
 ## Harness notes
 
-This skill runs under any agent harness. Invocation is `/create-pr` in Claude
-Code and `$create-pr` in Codex.
+Invocation is `/create-pr` in Claude Code and `$create-pr` in Codex. Read every
+`AGENTS.md` and `CLAUDE.md` that exists and follow all of them; when two
+conflict, ask which wins. Also read any pull request template
+(`.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/*`); its
+requirements override the default body, but skip boilerplate the repository
+does not require. Prefer the harness's own file and search tools over the shell
+snippets, ask confirmations through its confirmation mechanism, and write the
+body to its scratchpad or temp directory, never into the working tree.
 
-- Repository instructions live in `AGENTS.md`, `CLAUDE.md`, or both. Read every
-  one that exists and follow all of them. If two files conflict, ask the user
-  which wins.
-- Inspect repository PR templates when present, including `.github/pull_request_template.md` and `.github/PULL_REQUEST_TEMPLATE/*`. Repository requirements/templates override the default body shape where applicable.
-- Shell snippets show intent. When your harness has a dedicated file-reading or
-  search tool, use it instead of `sed`, `cat`, or `find`.
-- Confirmation prompts show required substance, not required formatting. Ask
-  through whatever confirmation mechanism your harness provides.
-- Write the PR body to your harness's scratchpad or temp directory, never inside
-  the repository working tree.
-- **Do not add tool attribution trailers or generated-by footers** to commits or
-  PR bodies unless the repository instruction file explicitly asks for them.
-- This skill depends on the `commit` skill (step 4). If your harness cannot
-  invoke one skill from another, read `../commit/SKILL.md` and follow its rules
-  inline.
+Add no attribution trailers or generated-by footers unless an instruction file
+asks for them. If the harness cannot invoke one skill from another, read
+`../commit/SKILL.md` and follow it inline.
 
 ## 1. Resolve the repository
 
-Use the current Git repository. If the current directory is not inside a Git
-repository, inspect direct child directories that have an `origin` remote and ask
-the user which one to use.
+Use the current Git repository; outside one, inspect child directories with an
+`origin` remote and ask which to use. Derive `<dir>`, `<slug>`, `<repo-name>`,
+and `<default-branch>` (falling back to `main`). Run every git command as
+`git -C <dir> ...` and every GitHub command with `--repo <slug>`.
 
-Derive:
-
-- `<dir>`: repository root.
-- `<slug>`: GitHub `owner/name` from `origin`.
-- `<repo-name>`: the `name` half of `<slug>`.
-- `<default-branch>`: GitHub default branch, falling back to `main` when it
-  cannot be resolved.
-
-Run **every** git command with `git -C <dir> ...` and **every** GitHub command
-with `--repo <slug>`, so the skill works from any current directory.
-
-Read repository-specific instructions:
+Read the instruction files, preferring hints under `## Pull Request`,
+`## Pull Requests`, or `## Git And PR Safety`:
 
 ```bash
-find "<dir>" \
-    \( -name .git -o -name node_modules -o -name vendor \) -prune -o \
+find "<dir>" \( -name .git -o -name node_modules -o -name vendor \) -prune -o \
     \( -name AGENTS.md -o -name CLAUDE.md \) -print
 ```
 
-Read each file found. Prefer pull-request hints inside `## Pull Request`,
-`## Pull Requests`, or `## Git And PR Safety` when present; see the overrides
-index at the end of this file.
-
-Also inspect any applicable pull-request template before generating the body. Do not copy irrelevant template boilerplate when the repository does not require it.
-
-Inspect the repository:
+Inspect the state:
 
 ```bash
 git -C <dir> status --short --branch
-git -C <dir> branch --show-current
 git -C <dir> diff --stat
-git -C <dir> diff --name-status
 git -C <dir> diff --cached --stat
-git -C <dir> diff --cached --name-status
 gh repo view <slug> --json nameWithOwner,defaultBranchRef
 ```
 
 ## 2. Prepare the branch
 
-Base branch is `<default-branch>`.
+The base is `<default-branch>`. Use the branch the user gave; else reuse the
+current branch when it already has an allowed prefix; else infer a concise,
+accurate name from the requested work and the changes. Allowed prefixes are
+`fix/`, `feat/`, `improvement/`, `chore/`, and `docs/`, unless an instruction
+file allows others.
 
-Resolve and validate the target branch:
+| Prefix | For |
+|---|---|
+| `fix/` | something was wrong: a bug, regression, broken behavior, or reliability problem |
+| `feat/` | anything was added: user-facing behavior, a package, a capability |
+| `improvement/` | reworking behavior that already worked, with nothing added and nothing fixed |
+| `chore/` | maintenance that changes neither what a consumer can do nor runtime behavior: removals, renames, dependency bumps, upkeep |
+| `docs/` | documentation-only work |
 
-- Use the provided branch when present and valid.
-- Reuse the current work branch when no branch is provided and it already matches
-  an allowed work-branch prefix.
-- If no branch is provided and the current branch does not match an allowed
-  prefix, infer a concise, accurate name from the requested work and the local
-  changes.
-- Accept only `fix/*`, `feat/*`, `improvement/*`, `chore/*`, or `docs/*` unless the repository instruction file explicitly allows another prefix.
-- Infer `fix/<slug>` for bug fixes, regressions, broken behavior, or reliability fixes.
-- Infer `feat/<slug>` for new user-facing behavior, new packages, or new product capabilities.
-- Infer `improvement/<slug>` for reworking behavior that already worked, such as
-  a clearer API shape, better defaults, or a rewritten implementation with the
-  same surface.
-- Infer `chore/<slug>` for maintenance that adds no behavior and fixes nothing, such as removing an API, renaming, dependency bumps, or repository upkeep.
-- Infer `docs/<slug>` for documentation-only work that is neither correcting broken runtime behavior nor introducing a product capability.
+The prefix sets the title kind and is expensive to change after a push, so
+choose it deliberately. `fix/` and `feat/` are the default pair. Prefer `fix/`
+whenever something was actually wrong, even in a removal that corrects false
+documentation, and `feat/` whenever anything was added, however small. A runtime
+fix that also updates docs stays `fix/`. When two prefixes are both defensible,
+or the summary cannot be inferred confidently, ask **before** creating the
+branch.
 
-**The prefix sets the title kind and cannot be changed cheaply after a push, so
-choose it deliberately.** `fix/` and `feat/` are the default pair and stay the right answer for most runtime/product work. Reach for `improvement/`, `chore/`, or `docs/` only when those are more honest:
-
-- Prefer `fix/` over `chore/` whenever something was actually wrong. A removal
-  that also corrects false documentation is still a fix.
-- Prefer `feat/` over `improvement/` whenever anything was added. A rework that
-  introduces one new method is a feature, however small that method is.
-- `chore/` is narrow. If the change alters what a consumer can do or what the code does at runtime, it is not a chore.
-- `docs/` is for documentation-only work. A runtime bug fix that also updates docs remains `fix/`; a feature that includes docs remains `feat/`.
-
-- **Do not use vague names** such as `api-surface`. The name should describe the
-  actual change.
-- Ask the user when two prefixes both look defensible, or when the summary
-  cannot be inferred confidently. Ask **before** creating the branch, never
-  after.
-
-Reject names with whitespace, `..`, `@{`, `//`, a leading `-`, a trailing `/`, or
-`.lock`. Reject protected names such as `main`, `master`, `development`, or
+Name the actual change, never something vague like `api-surface`. Reject names
+containing whitespace, `..`, `@{`, `//`, a leading `-`, a trailing `/`, or
+`.lock`, and protected names such as `main`, `master`, `development`, or
 `release`.
 
-Before creating or switching branches, verify the branch/base relationship when a candidate branch exists or the current branch is being reused:
+When reusing a branch or a candidate exists, check its ancestry:
 
 ```bash
 git -C <dir> merge-base "<default-branch>" HEAD
@@ -157,62 +99,45 @@ git -C <dir> rev-list --count "<default-branch>..HEAD"
 git -C <dir> rev-list --count "HEAD..<default-branch>"
 ```
 
-If ancestry suggests the work branch was based on another feature branch or otherwise contains unrelated history, report it and ask before continuing. Do not automatically rebase or merge.
+If it looks based on another feature branch or carries unrelated history,
+report it and ask; never rebase or merge automatically.
 
-As soon as a concrete branch is known, check for an existing open PR:
-
-```bash
-gh pr view "<branch>" --repo <slug> --json number,url,state,title
-```
-
-If an open PR already exists, report it and stop instead of preparing a duplicate. Use `respond-pr`, `fix-pr`, or the relevant development workflow when the goal is to update that PR.
-
-Check whether the branch already exists:
+Once the branch is known, check for an open pull request with
+`gh pr view "<branch>" --repo <slug> --json number,url,state,title`. If one
+exists, report it and stop; updating it belongs to `respond-pr`, `fix-pr`, or
+the development workflow.
 
 ```bash
 git -C <dir> rev-parse --verify "<branch>"
 git -C <dir> ls-remote --heads origin "<branch>"
 ```
 
-If the current branch already matches `<branch>`, continue. If the branch exists
-locally or remotely and the current branch does not match it, stop and ask
-whether to switch to it, use another name, or cancel. Otherwise create it:
+If the current branch is `<branch>`, continue. If it exists locally or remotely
+and is not current, ask whether to switch to it, pick another name, or cancel.
+Otherwise run `git -C <dir> switch -c "<branch>"`, keeping uncommitted changes
+in place on the current `HEAD`; never stash or switch through another base.
 
-```bash
-git -C <dir> switch -c "<branch>"
-```
+## 3. Determine the scope
 
-If the working tree already has uncommitted changes, keep them in place and
-create the branch from the current `HEAD`. Do not stash or switch through another
-base branch unless the user explicitly asks.
-
-## 3. Determine the PR and commit scope
-
-Determine PR scope from the complete branch delta, not merely uncommitted changes. Inspect:
+The pull request covers the whole branch delta, not just uncommitted changes:
 
 ```bash
 git -C <dir> log --oneline "<default-branch>..HEAD"
 git -C <dir> diff --stat "<default-branch>...HEAD"
-git -C <dir> diff --name-status "<default-branch>...HEAD"
 git -C <dir> diff "<default-branch>...HEAD"
 git -C <dir> diff
 git -C <dir> diff --cached
 ```
 
-Review every existing branch commit in `<default-branch>..HEAD` and make sure it actually belongs to this PR. If committed history contains clearly unrelated work, surface it instead of hiding it inside the PR. Do not rewrite/rebase history automatically.
+Confirm every existing branch commit belongs to this pull request, and surface
+unrelated history instead of hiding it. Read untracked files before including
+them. Leave out build output, archives, logs, caches, and secrets unless
+clearly intended, and scratch files, temporary migrations, and experimental
+directories unless the user explicitly asks. Pull request scope and commit
+scope differ: one pull request can hold several focused commits, and the
+`commit` skill decides those.
 
-For untracked files, inspect their contents before including them. Exclude build
-outputs, archives, logs, caches, secrets, and unrelated local files unless they
-are clearly intended. Do not include scratch files, temporary migration files, or
-experimental directories unless the user explicitly asks.
-
-Use the repository instruction file to identify repository-specific file groups.
-If no grouping guidance exists, group by intent and ownership rather than by
-minimizing commit count. Prefer more focused commits over fewer broad ones.
-
-PR scope and commit scope are different. A PR may legitimately contain several focused commits. Do not collapse independent/reviewable changes into one giant commit merely because they belong to the same PR. Let the `commit` skill apply its atomicity, reversibility, and reviewability rules.
-
-State the intended scope before handing off:
+State the scope before handing off, and ask when it is ambiguous:
 
 ```text
 This PR should include:
@@ -222,99 +147,72 @@ This PR should not include:
 - <file or group>: <why it is unrelated>
 ```
 
-If the scope is ambiguous, ask which files should be included. If it is clear,
-continue.
-
 ## 4. Hand off to the commit skill
 
-Run the `commit` skill through your harness's skill mechanism, handing it `<dir>`
-as the repository root and the file scope from step 3. Let that skill handle
-staging, commit grouping, verification, commit creation, and push confirmation.
-
-If your harness cannot invoke one skill from another, read `../commit/SKILL.md`
-and follow its rules inline for the same file scope. **Do not substitute ad-hoc
-staging**, and never use `git add .` or `git add -A`.
-
-Do not create the PR until the commit skill has completed and the branch has been pushed to `origin`. The `commit` workflow owns committing and pushing local work; `create-pr` must not perform a second ad-hoc push. Then verify:
+Run the `commit` skill with `<dir>` and the step 3 file scope; it owns staging,
+grouping, validation, commits, and the push. Never stage ad hoc, never use
+`git add .` or `git add -A`, and never push a second time yourself. Then verify:
 
 ```bash
 git -C <dir> status --short --branch
+git -C <dir> ls-remote --heads origin "<branch>"
 git -C <dir> log --oneline origin/<default-branch>..HEAD
 git -C <dir> diff --stat origin/<default-branch>...HEAD
-git -C <dir> diff --name-status origin/<default-branch>...HEAD
 ```
 
-If there are no commits ahead of the base branch, **stop**; there is nothing to
-open a PR for.
+Continue only once the commit skill has finished and `origin/<branch>` matches
+the local `HEAD`. If the user declined the push, stop: the pull request cannot
+be opened from an unpushed branch. With no commits ahead of the base, stop:
+there is nothing to open.
 
-## 5. Generate the PR text and review gate
+## 5. Write the title and body
 
-Use the PR writing style and required sections from repository instructions and applicable PR templates when present. Those requirements take precedence. Otherwise use this default style:
+Repository style and templates take precedence. Otherwise:
 
-- Title format: `<Kind>: <short human summary>`. Normally map `fix/` → `Bugfix`, `feat/` → `Feature`, `improvement/` → `Improvement`, `chore/` → `Chore`, and `docs/` → `Docs`. If the actual complete PR diff clearly contradicts the branch prefix, do not write a misleading title just to match it. Flag the mismatch and ask how to proceed. Never rename an already-pushed branch automatically.
-- Keep the title direct and short.
-- **Do not** use Conventional Commit prefixes such as `fix:` in the PR title.
-- Body is two or three short paragraphs.
-- First paragraph starts with `This PR resolves`, `This PR adds`,
-  `This PR updates`, or `This PR improves`.
-- For a bugfix, the second paragraph explains the previous behavior with
-  `Before this, ...` and the new behavior with `This now ...`.
-- The final paragraph describes a concrete related change or compatibility note
-  when useful.
-- **Do not** include validation commands or results in the body unless the user
-  explicitly asks. Report validation separately in your response.
-- **Do not** add meta statements about the PR being scoped, limited, focused, or
-  only containing certain files.
-- **Do not** add markdown headings, checklists, or test sections unless the user
-  asks.
-- **Do not** append tool attribution trailers or generated-by footers unless the
-  repository instruction file explicitly asks for them.
+- Title: `<Kind>: <short human summary>`, mapping `fix/` → `Bugfix`, `feat/` →
+  `Feature`, `improvement/` → `Improvement`, `chore/` → `Chore`, `docs/` →
+  `Docs`. No Conventional Commit prefixes. If the full diff clearly contradicts
+  the branch prefix, flag the mismatch and ask; never rename a pushed branch
+  automatically.
+- Body: two or three short paragraphs. The first starts with `This PR
+  resolves`, `This PR adds`, `This PR updates`, or `This PR improves`. For a
+  bugfix, the second describes the old behavior with `Before this, ...` and the
+  new with `This now ...`. The last covers a related change or compatibility
+  note when useful.
+- No validation commands or results (report those in your response), no
+  headings, checklists, or test sections unless asked, and no remarks about the
+  pull request being scoped or focused.
 
-Write the proposed body to your harness's scratchpad or temp directory, never
-inside the repository working tree:
-
-```text
-<scratchpad>/<repo-name>-pr-<branch-slug>.md
-```
-
-Show the user the consequential PR content: base branch, head branch, commits included, files included, proposed title, and the exact proposed body. Do not clutter the approval preview with the shell command. Then ask:
+Write the body to `<scratchpad>/<repo-name>-pr-<branch-slug>.md`. Show the base,
+head, commits, files, title, and exact body, without the shell command, and ask:
 
 ```text
 Do you want me to create this PR?
 ```
 
-Do **not** run `gh pr create` until the user clearly approves. If edits are
-requested, revise the body file and show it again.
+Revise and show it again when edits are requested.
 
 ## 6. Create the PR
 
-After approval, re-check that no PR was created for the branch while this workflow was preparing the request:
+After approval, re-check that no pull request appeared meanwhile
+(`gh pr view "<branch>" --repo <slug> --json url -q .url`); if one did, report
+it and stop. Otherwise:
 
 ```bash
-gh pr view "<branch>" --repo <slug> --json url -q .url
+gh pr create --repo <slug> --base "<default-branch>" --head "<branch>" \
+    --title "<title>" --body-file "<body-file>"
 ```
 
-If one exists, report the URL and stop. Otherwise create it:
-
-```bash
-gh pr create \
-    --repo <slug> \
-    --base "<default-branch>" \
-    --head "<branch>" \
-    --title "<title>" \
-    --body-file "<body-file>"
-```
-
-Report the PR URL from the command output. **Do not merge the PR.**
+Report the URL. Do not merge.
 
 ## Optional overrides
 
-A repository's `AGENTS.md` or `CLAUDE.md` may override defaults. Recognised hints
-live under `## Pull Request`, `## Pull Requests`, or `## Git And PR Safety`:
+A repository's `AGENTS.md` or `CLAUDE.md` may override defaults under
+`## Pull Request`, `## Pull Requests`, or `## Git And PR Safety`:
 
 | Hint | Affects |
 |---|---|
-| Allowed branch prefixes beyond `fix/*`, `feat/*`, `improvement/*`, `chore/*`, and `docs/*` | step 2 |
+| Allowed branch prefixes beyond the five defaults | step 2 |
 | Default base branch, when not the GitHub-reported default | steps 1, 2, 4 |
 | Repository-specific file grouping | step 3 |
 | PR title and body style, required sections, or templates | step 5 |
