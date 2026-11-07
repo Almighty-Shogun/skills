@@ -105,7 +105,7 @@ git -C <dir> diff --stat
 git -C <dir> diff --name-status
 git -C <dir> diff --cached --stat
 git -C <dir> diff --cached --name-status
-gh repo view --repo <slug> --json nameWithOwner,defaultBranchRef
+gh repo view <slug> --json nameWithOwner,defaultBranchRef
 ```
 
 ## 2. Prepare the branch
