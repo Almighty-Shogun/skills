@@ -12,87 +12,48 @@ disable-model-invocation: true
 
 # Merge PR
 
-Merge one pull request and clean up its branch when safe.
-
-One pull request per run.
+Merge one pull request per run, then clean up its branch when safe.
 
 ## Contract
 
-Allowed mutations:
-- merge the selected pull request;
-- delete its remote head branch when appropriate;
-- update the PR's base branch locally after merge;
-- delete the local merged head branch with `git branch -d` when safe.
-
-Do not:
-- edit source code;
-- fix review findings;
-- fix CI failures;
-- create commits;
-- rebase;
-- reset;
-- stash;
-- amend;
-- force-push;
-- squash;
-- close a PR without merging it;
-- create releases/tags/version commits.
-
-Use `review-pr`, `respond-pr`, `fix-pr`, or `delegate-task` when a blocker needs actual code changes.
+Allowed: merge the selected pull request, delete its remote head branch when
+appropriate, fast-forward its base branch locally, and delete the local head
+branch with `git branch -d`. Never edit code, fix review or CI findings, post
+replies or review comments (`review-pr --comment` owns that flow), create
+commits, rebase, reset, stash, amend, force-push, squash, close without merging,
+or create releases, tags, or version commits. Blockers that need code changes
+go to `review-pr`, `respond-pr`, `fix-pr`, or `delegate-task`. If the
+environment blocks a Git or GitHub mutation, report it rather than working
+around it.
 
 ## Invocation
 
 ```text
-merge-pr
-merge-pr 42
-merge-pr https://github.com/owner/repo/pull/42
-merge-pr 42 --no-review
-merge-pr 42 --comment
-merge-pr 42 --auto-merge
+merge-pr [<number> | <PR URL>] [--no-review] [--comment] [--auto-merge]
 ```
 
-- No PR argument: list open PRs and ask which one to merge.
-- PR number or URL: resolve that exact PR.
-- `--no-review`: explicitly skips the fresh `review-pr` pass.
-- `--comment`: forwards to `review-pr`, which still requires approval before posting.
-- `--auto-merge`: skips only the final merge confirmation after every safety gate passes.
+- No PR: list open pull requests and ask which.
+- `--no-review` skips the fresh `review-pr` pass, visibly.
+- `--comment` is forwarded to `review-pr`, which still asks before posting.
+- `--auto-merge` skips only the final merge confirmation, once every gate has
+  passed. It never means "ignore unsafe state".
 
-`--auto-merge` never means "ignore unsafe state".
+Read `AGENTS.md` and `CLAUDE.md`; they may set the base branch convention, merge
+method, branch deletion policy, whether review may be skipped, and extra gates.
+Ask when they conflict materially.
 
-## Repository instructions
+## 1. Resolve the repository and PR
 
-Read applicable `AGENTS.md` and `CLAUDE.md` files.
-
-Repository instructions may override:
-- preferred base/default branch conventions;
-- merge method;
-- branch deletion policy;
-- whether review may be skipped;
-- extra merge gates.
-
-If instructions conflict materially, ask rather than guessing.
-
-## 1. Resolve repository and PR
-
-Resolve:
-- `<dir>` repository root;
-- `<slug>` GitHub `owner/name`;
-- `<default-branch>` GitHub default branch.
-
-Use `git -C <dir> ...` for Git commands and `--repo <slug>` for `gh pr` commands.
-
-When no PR is supplied:
+Derive `<dir>`, `<slug>`, and `<default-branch>`; use `git -C <dir>` and
+`--repo <slug>` throughout. For a URL, resolve that repository and number;
+never guess from an unrelated current repository. Without a PR:
 
 ```bash
 gh pr list --repo <slug> --state open \
   --json number,title,isDraft,headRefName,baseRefName,url
 ```
 
-Show all open PRs and ask the user which one.
-
-For a supplied URL, extract/resolve the repository and PR number. Do not guess from an unrelated current repository.
-
-Read the chosen PR:
+Read the chosen one:
 
 ```bash
 gh pr view <number> --repo <slug> --json \
@@ -101,154 +62,70 @@ headRefName,headRepositoryOwner,headRepository,baseRefName,url,headRefOid,\
 statusCheckRollup,comments,reviews
 ```
 
-The PR's actual `baseRefName` is the merge target. It does not need to equal the repository default branch.
+The merge target is the pull request's `baseRefName`, which need not be the
+default branch.
 
-## 2. Inspect local working-copy safety
+## 2. Local working-copy safety
 
-Do not switch branches yet.
+Do not switch branches yet. Run `git status --short`, `git branch
+--show-current`, and `git fetch origin`. A dirty tree does not block the remote
+merge, since the merge does not touch the local branch, but work out whether the
+post-merge switch and cleanup would collide with local work: tracked
+modifications against the target base, and untracked files whose paths exist on
+it. Never reset, stash, clean, discard, or carry user modifications onto
+another branch because Git happens to allow it.
 
-Inspect:
+If local work blocks only cleanup, the merge may proceed once the user knows
+cleanup will stay incomplete. If local state makes the merge itself ambiguous,
+stop and name the paths.
 
-```bash
-git -C <dir> status --short
-git -C <dir> branch --show-current
-git -C <dir> fetch origin
-```
+## 3. Eligibility
 
-Preserve all local work.
+Stop on any hard blocker:
 
-Never:
-- reset;
-- stash;
-- clean;
-- discard;
-- carry user modifications onto another branch merely because Git happens to permit it.
-
-A dirty tree does not automatically block the remote merge, because the PR can be merged without changing the local branch.
-
-However, determine whether post-merge switching/updating/cleanup would overwrite or collide with local work.
-
-Check tracked modifications against the target base and relevant branch paths.
-
-For untracked files, check for path collisions with the target branch before switching. Untracked files are not universally safe.
-
-If local work blocks only post-merge cleanup, the remote merge may still proceed after the user understands that cleanup will remain incomplete.
-
-If local state makes the merge itself ambiguous or unsafe, stop and name the exact paths/reason.
-
-`--auto-merge` does not bypass any of these checks.
-
-## 3. Check PR eligibility
-
-Stop when any hard blocker exists:
-
-- PR `state` is not `OPEN`;
-- PR is a draft;
+- state is not `OPEN`, or the pull request is a draft;
 - `mergeable` is `CONFLICTING`;
-- review decision is `CHANGES_REQUESTED`;
-- branch protection or `mergeStateStatus` says the PR is blocked;
-- required checks failed;
-- required checks are still pending/running/expected;
-- PR state is unknown enough that merge safety cannot be established.
+- the review decision is `CHANGES_REQUESTED`;
+- branch protection or `mergeStateStatus` blocks it;
+- a required check failed, timed out, was cancelled, or is still queued,
+  running, pending, or expected;
+- the state is too unknown to establish merge safety.
 
-Interpret `mergeStateStatus` instead of merely displaying it.
+Interpret `mergeStateStatus`: `DIRTY` is a conflict; `BLOCKED` is a protection,
+review, or check requirement to inspect; `UNSTABLE` needs its cause found
+before proceeding; `BEHIND` is reported, never auto-updated; `UNKNOWN` is
+never assumed safe. Repository-specific semantics may override these. An
+empty check rollup means **no checks ran**, not that they passed. Never weaken
+or bypass branch protection.
 
-Examples:
+## 4. Review feedback
 
-- `DIRTY` → merge conflicts; block.
-- `BLOCKED` → branch protection/review/check requirement blocks; inspect and block.
-- `UNSTABLE` → determine which check/review state causes it before proceeding.
-- `BEHIND` → report that the head is behind its base; do not automatically merge/rebase/update the branch.
-- `UNKNOWN` → do not assume safety.
+Show only feedback still relevant to merging: unresolved actionable requests or
+questions, change requests, and material concerns. Leave out resolved threads,
+approvals, bot chatter, CI notifications, and conversation. Acting on feedback
+belongs to `respond-pr`.
 
-Repository-specific required-state semantics may override these defaults.
+## 5. Fresh review
 
-### Check-state handling
+Unless `--no-review` was given, run `review-pr` against this pull request and
+its actual base, forwarding `--comment` only when supplied. If the harness
+cannot invoke one skill from another, read `../review-pr/SKILL.md` and follow
+it inline. Proceed only when it reports **no blocking findings**; otherwise
+stop and report them. With `--no-review`, show `review: skipped by --no-review`
+so an unreviewed merge never looks reviewed.
 
-For each relevant required check, require an acceptable terminal state before merging.
-
-Block on states such as:
-- failure;
-- timed out;
-- cancelled;
-- queued;
-- in progress;
-- pending;
-- expected/waiting.
-
-An empty check rollup means **no checks ran**, not "checks passed". Report that honestly.
-
-Do not weaken or bypass branch protection.
-
-## 4. Surface relevant review feedback
-
-Use review/comment data only for merge safety and user awareness.
-
-Show only feedback that remains relevant, such as:
-- unresolved actionable review requests;
-- unresolved questions material to merging;
-- change requests;
-- material unresolved concerns.
-
-Do not dump:
-- resolved threads;
-- approvals;
-- bot chatter;
-- CI notifications;
-- non-actionable conversation.
-
-Do not edit code or post replies from this skill.
-
-Use `respond-pr` for review feedback that requires action.
-
-## 5. Run a fresh review
-
-Unless the user supplied `--no-review`, run `review-pr` against the exact PR.
-
-If your harness cannot invoke one skill from another, read `../review-pr/SKILL.md`
-and follow its rules inline against the same PR.
-
-Forward `--comment` only when the user supplied it.
-
-The review must evaluate the current PR diff against its actual base branch.
-
-Proceed only when `review-pr` reports no blocking findings.
-
-If blocking findings exist, stop and report them.
-
-When `--no-review` was supplied, visibly state:
-
-```text
-review: skipped by --no-review
-```
-
-Never make an unreviewed merge look reviewed.
-
-## 6. Verify base relationship
-
-Inspect the PR head/base relationship without modifying history.
-
-Use GitHub/remote refs or equivalent:
+## 6. Base relationship
 
 ```bash
-git -C <dir> merge-base origin/<base-branch> <head-ref-or-sha>
-git -C <dir> rev-list --count origin/<base-branch>..<head-ref-or-sha>
-git -C <dir> rev-list --count <head-ref-or-sha>..origin/<base-branch>
+git -C <dir> merge-base origin/<base-branch> <head-sha>
+git -C <dir> rev-list --count origin/<base-branch>..<head-sha>
+git -C <dir> rev-list --count <head-sha>..origin/<base-branch>
 ```
 
-Report unusual ancestry when relevant.
-
-Do not:
-- rebase;
-- merge the base into the head;
-- update the PR branch;
-- force-push.
-
-A PR targeting a legitimate non-default base is supported.
+Report unusual ancestry. Never rebase, merge the base into the head, or update
+the pull request branch.
 
 ## 7. Propose the merge
-
-Show a compact plan:
 
 ```text
 Merging #42 <title>
@@ -261,161 +138,62 @@ Review: no blocking findings
 After merge: delete head branch when safe
 ```
 
-Include:
-- PR number/title;
-- base/head;
-- mergeability;
-- check state;
-- review result or explicit `--no-review`;
-- any unresolved material feedback;
-- planned branch cleanup.
+Include any unresolved material feedback. Without `--auto-merge`, ask for
+approval; with it, still show the plan.
 
-Without `--auto-merge`, ask explicit approval before merging.
+## 8. Re-check immediately before merging
 
-With `--auto-merge`, still show the plan, but the flag itself authorizes the merge once every gate below remains satisfied.
-
-## 8. Re-check immediately before merge
-
-Approval can become stale.
-
-Immediately before mutating GitHub, fetch the PR again and re-check:
-
-- `state`;
-- draft status;
-- head SHA (`headRefOid`);
-- mergeability;
-- `mergeStateStatus`;
-- review decision;
-- required checks;
-- base branch.
-
-If the head SHA or any material state changed since the reviewed/approved plan, stop and show the new state.
-
-Do not merge a changed PR under stale approval or stale review.
+Approval goes stale. Fetch the pull request again and compare state, draft
+status, head SHA (`headRefOid`), mergeability, `mergeStateStatus`, review
+decision, required checks, and base branch. If the head SHA or any material
+state changed since the review or approval, stop and show the new state.
 
 ## 9. Merge
 
-Use the repository's required merge method when explicitly configured.
-
-Otherwise default to a merge commit:
+Use the repository's configured merge method; otherwise a merge commit, which
+preserves the branch commits:
 
 ```bash
 gh pr merge <number> --repo <slug> --merge
 ```
 
-Preserve the branch commits.
+Never `--squash`, `--rebase`, or force options. Delete the remote head branch
+only for an ordinary same-repository disposable branch the user owns that is
+neither protected nor required to be kept. Leave fork branches, protected or
+long-lived branches, and uncertain ownership intact, and say why.
 
-Do not use:
-- `--squash`;
-- `--rebase`;
-- force options.
-
-### Remote branch deletion
-
-Delete the remote head branch only when appropriate.
-
-Before requesting deletion, determine:
-- whether the head branch belongs to the same repository;
-- whether the current user/repository owns it;
-- whether it is protected or intentionally retained;
-- whether repository instructions require keeping it.
-
-For an ordinary same-repository disposable feature branch, deletion is appropriate.
-
-For fork PRs, protected branches, shared long-lived branches, or uncertain ownership, leave it intact and report why.
-
-If safe, use the host-supported branch deletion behavior as part of or after the merge.
-
-## 10. Verify remote merge
-
-After the merge call, verify from GitHub:
+## 10. Verify the merge
 
 ```bash
 gh pr view <number> --repo <slug> --json \
   state,mergedAt,mergeCommit,url,headRefName,baseRefName
 ```
 
-Require `state = MERGED`.
+Require `state = MERGED` and record the merge commit. A quiet command is not
+proof of success.
 
-Record the merge commit SHA when available.
+## 11. Local cleanup
 
-Do not infer success merely because the merge command returned without obvious output.
-
-## 11. Update local base branch when safe
-
-Only after the remote merge succeeds, update the PR's actual base branch locally.
-
-If switching would overwrite/collide with local work, do **not** disturb the working copy.
-
-Report:
-
-```text
-PR merged successfully; local base update/branch cleanup was skipped because:
-- <path/reason>
-```
-
-If safe:
+Only after the remote merge succeeded, and only when switching cannot collide
+with local work:
 
 ```bash
 git -C <dir> switch <base-branch>
 git -C <dir> pull --ff-only origin <base-branch>
-```
-
-Use `--ff-only` for this synchronization unless repository instructions require otherwise.
-
-Do not create a local merge commit merely to update the base.
-
-## 12. Delete local merged branch when safe
-
-If a local branch matching the PR head exists and is not currently needed:
-
-```bash
 git -C <dir> branch -d <head-branch>
 ```
 
-Use `-d`, never `-D`.
+Delete the local head branch only when it exists and is not checked out in
+another worktree. Use `--ff-only` unless the repository requires otherwise, and
+never create a local merge commit to update the base. Use `-d`, never `-D`; if it refuses,
+stop cleanup and report it. When cleanup is skipped or incomplete, keep
+"PR merged successfully, local cleanup incomplete" distinct from "PR merge
+failed", and name the paths or reason.
 
-If `-d` refuses, stop cleanup and report it. Do not force deletion.
+## 12. Report
 
-A cleanup failure does not mean the PR merge failed.
-
-Distinguish:
-
-```text
-PR merged successfully
-Local cleanup incomplete
-```
-
-from:
-
-```text
-PR merge failed
-```
-
-## 13. Final verification
-
-Inspect:
-
-```bash
-git -C <dir> status --short --branch
-git -C <dir> branch
-```
-
-Report separately:
-- remote PR merge result;
-- merge commit SHA;
-- check state;
-- review result;
-- remote branch deletion state;
-- local base update state;
-- local branch deletion state;
-- current local branch/worktree state.
-
-Do not claim the local repository is clean/up-to-date if cleanup was intentionally skipped.
-
-Keep the response compact.
-
-Example:
+Check `git status --short --branch` and `git branch`, then report each part
+separately:
 
 ```text
 Merged #42: Feature: Add cache support
@@ -426,21 +204,7 @@ Review: no blocking findings
 Remote branch: deleted
 Local base: development updated
 Local branch: deleted
+Current: development, clean
 ```
 
-## Safety
-
-- One PR per run.
-- Never bypass pending/failing required checks.
-- Never bypass branch protection.
-- Never merge a changed head SHA under stale review/approval.
-- Never let `--auto-merge` bypass a safety gate.
-- Never force-push, reset, stash, clean, rebase, or amend.
-- Never use `git branch -D`.
-- Never discard or move unrelated local work.
-- Never edit code in response to review or CI findings.
-- Never close a PR without merging it.
-- Never create releases, tags, or version commits.
-- Never skip `review-pr` unless the user supplied `--no-review`.
-- Never post review comments directly; `review-pr --comment` owns that flow.
-- If a Git/GitHub mutation is blocked by the environment, report the blocked operation rather than working around it.
+Never claim the local repository is clean or current when cleanup was skipped.
