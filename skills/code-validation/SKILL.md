@@ -6,70 +6,47 @@ disable-model-invocation: true
 
 # Code Validation
 
-Use when the user wants local/current changes reviewed, verified, audited for regressions, or checked against requirements.
+Review local changes for correctness, regressions, and missed requirements. A
+GitHub pull request belongs to `review-pr`, and CI failures to `fix-pr`.
 
-For a GitHub pull request, use `review-pr`. For GitHub Actions diagnosis/fixing, use `fix-pr`.
+Validation is read-only. Fixes happen only when the user asks for them after
+seeing the findings.
 
-This skill is validation-only by default. Do not modify code unless the user explicitly asks for fixes after seeing the findings.
+## Independence
 
-## Core rule
+Run the review in a fresh validation agent, so it judges the repository state
+and the diff rather than an implementation summary. Give it a Task Contract
+(intended behavior, scope, constraints, acceptance criteria, drawn from the
+request, tests, issue context, or an approved plan), repository access, the
+current diff and status, the relevant tests, and any `AGENTS.md` or `CLAUDE.md`.
+Leave out implementation reasoning and self-assessment unless a needed fact
+cannot be recovered from the repository.
 
-Use a fresh validation agent so the review is independent from the implementation process.
+## Scope
 
-The validator should inspect actual repository state and the current diff rather than trusting an implementation summary.
+Default to the working-tree diff. Without one, validate the files, commit,
+branch comparison, or behavior the user names. Read beyond the diff only as far
+as dependencies, contracts, tests, and regressions require; no broad audit
+unless asked.
 
-## Task Contract
+## What it checks
 
-Reduce the request to:
+Correctness, missed requirements, regressions, edge cases, unintended behavior
+or API changes, and error handling. Security where the change touches trust
+boundaries, auth, validation, secrets, deserialization, filesystem, network, or
+command execution. Performance where the path is performance-sensitive.
+Conventions, and complexity that creates real maintenance or correctness risk,
+including refactors that move complexity instead of removing it. For added or
+upgraded dependencies: necessity, actual use, compatibility, and breaking
+release notes, with maintenance, license, or transitive concerns only when they
+matter. Missing or insufficient tests.
 
-- Intended behavior / goal
-- Scope
-- Constraints
-- Acceptance criteria
-
-If requirements can be recovered from tests, issue context, or a concise approved plan already present, include only the relevant parts.
-
-Do not forward implementation reasoning or self-assessment unless a necessary fact cannot be recovered from repository state.
-
-## Validation agent
-
-Give the agent:
-
-- Task Contract
-- repository access
-- direct access to current code, git diff/status, and relevant tests
-- relevant repository instructions such as `AGENTS.md` / `CLAUDE.md` when present
-
-It should independently check:
-
-- correctness
-- missed requirements
-- regressions
-- edge cases
-- unintended behavior/API changes
-- error handling where relevant
-- security-sensitive behavior where the change touches trust boundaries,
-  authorization/authentication, validation, secrets, deserialization, filesystem,
-  network, or command execution
-- meaningful performance regressions where the changed path is performance-sensitive
-- compatibility with existing conventions
-- unnecessary complexity that creates real maintenance or correctness risk
-- whether a refactor actually reduces complexity rather than moving it elsewhere
-- dependency additions/upgrades when relevant: necessity, actual usage, compatibility,
-  and breaking migration/release notes; verify maintenance/license/transitive concerns
-  only when they materially affect the project
-- missing or insufficient tests/checks
-
-Run the narrowest useful tests, build, lint, or type checks when practical. Passing
-checks are necessary evidence, not sufficient proof of correctness; inspect whether
-they cover the changed contract and important failure paths.
-
-Do not rewrite correct code for stylistic preference. Technical evidence and
-repository contracts outrank reviewer preference.
+It runs the narrowest useful tests, build, lint, or typecheck. Passing checks
+are evidence, not proof; it checks whether they exercise the changed contract
+and its failure paths. Repository contracts and technical evidence outrank
+reviewer preference, so correct code is not rewritten for style.
 
 ## Output
-
-If issues exist, return only actionable findings ordered by severity:
 
 ```text
 Validation
@@ -78,74 +55,23 @@ Validation
 3. [Low] ...
 ```
 
-If no meaningful issues exist:
+or `Validation passed. No actionable issues found.`, optionally with one line on
+the checks run.
 
-```text
-Validation passed. No actionable issues found.
-```
+- **High**: incorrect behavior, a concrete data or security risk, a broken
+  contract, a serious regression, or a material performance failure.
+- **Medium**: a meaningful edge-case failure, an incomplete requirement, a
+  dependency or compatibility problem, or a likely correctness or maintenance
+  problem.
+- **Low**: a real but limited issue worth fixing.
 
-Optionally add one compact line for checks run when that information is useful.
-
-Default ceiling: ~500 tokens. Use less when possible.
-
-## Severity
-
-Use severity based on impact, not preference:
-
-- High: incorrect behavior, concrete data/security risk, broken API/contract,
-  serious regression, or material performance failure
-- Medium: meaningful edge-case failure, incomplete requirement, dependency/compatibility
-  problem, or likely maintainability/correctness problem
-- Low: real but limited issue worth fixing
-
-Do not report purely subjective style preferences as findings.
-
-## Token efficiency
-
-Do not include:
-
-- a walkthrough of the implementation
-- praise or summaries of correct code
-- every file inspected
-- implementation-agent reasoning
-- large diffs or source excerpts
-- speculative issues unsupported by repository evidence
-
-Prefer references to exact files/symbols over copied code.
-
-## Validation scope
-
-Default to the current working-tree diff when changes are present.
-
-Expand beyond the diff only as needed to understand dependencies, contracts, tests, or regressions. Do not perform a broad repository audit unless requested.
-
-If there is no diff, validate the explicitly named files, commit, branch comparison, or behavior the user identifies.
+Report findings only, with file and symbol references instead of copied code;
+no walkthrough, praise, inspected-file lists, or issues without evidence. A pass
+means no actionable issues were found within the validated scope, not that none
+exist.
 
 ## Fixes
 
-Do not automatically fix findings. This keeps validation independent and prevents scope creep.
-
-If the user subsequently asks to fix the findings, use a fresh implementation agent with only:
-
-- Task Contract
-- validation findings
-- repository access
-
-After fixes, recommend or perform a fresh validation pass rather than relying on the fixer to self-approve.
-
-## Repository safety
-
-The validation pass is read-only.
-
-Do not:
-- modify source, tests, configuration, or documentation;
-- stage, commit, or push;
-- create/delete branches;
-- reset, stash, clean, amend, or rebase;
-- overwrite unrelated user work.
-
-If the user asks to fix findings afterward, that is a separate implementation step.
-
-## User-facing behavior
-
-Report findings concisely and independently. Do not imply that a passing review proves absence of all possible defects; it means no actionable issues were found within the validated scope.
+When the user asks for fixes, use a fresh implementation agent with only the
+Task Contract, the findings, and repository access, then run a fresh validation
+rather than letting the fixer approve its own work.
