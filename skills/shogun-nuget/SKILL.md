@@ -154,8 +154,8 @@ When the task edits `~/Development/nuget-packages` itself rather than a consumer
 that repository's own `CLAUDE.md` and `docs/CLAUDE.md` govern, and they are
 stricter than this skill:
 
-- Every member carries a full XML documentation block, checked by the build with
-  `GenerateDocumentationFile` on and no `NoWarn`.
+- Every member carries an XML documentation block in the compact `csharp-docs`
+  style, checked by the build with `GenerateDocumentationFile` on and no `NoWarn`.
 - `max_line_length` is 140 columns, counting the `///` prefix.
 - `<since>` records when a member was added, never when it changed. A new member
   gets `<since>Unreleased</since>` until the release process replaces it.

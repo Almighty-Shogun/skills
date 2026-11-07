@@ -1,801 +1,380 @@
 ---
 name: csharp-docs
 description: >-
-  Author, update, or independently verify C# XML documentation against a strict
-  accuracy-first standard. Default mode writes or updates /// docs. Use --verify
-  for a read-only semantic/completeness/shape audit, and --verify --fix to
-  review findings before applying approved documentation-only corrections.
-  Covers public/private members, tag completeness/order/grouping, verified
-  semantics, escaping exceptions, remarks, inheritdoc, cref usage, extension
-  receivers, wrapping, author/since metadata, XML-doc compiler failures, and
-  stale cross-file claims. Never change implementation code merely to make
-  documentation true, and never document a defect as designed behavior.
+  Write, update, or verify C# XML documentation (///) in a compact,
+  accuracy-first style. Default mode writes or updates docs; --verify audits
+  them read-only; --verify --fix applies approved documentation-only fixes.
+  Never changes code to make docs true, and never documents a defect as
+  designed behavior.
 argument-hint: "[path ...] [--verify [--fix]]"
 ---
 
 # C# Docs
 
-Author and update C# XML documentation.
-
-This skill governs `///` XML documentation, not ordinary explanatory comments. A general "avoid comments unless needed" rule does not suppress XML API documentation where the project documents its members.
+Author, update, and verify C# XML documentation. This governs `///` API
+documentation, not ordinary comments: a general "avoid comments" rule does not
+suppress XML docs where the project documents its members.
 
 ## Modes
 
-### Default: author/update
-
 ```text
-csharp-docs
-csharp-docs path/to/Project
-csharp-docs path/to/File.cs
-csharp-docs path/A path/B
+csharp-docs [path ...]                  write or update docs
+csharp-docs [path ...] --verify         read-only audit
+csharp-docs [path ...] --verify --fix   audit, then apply approved fixes
 ```
 
-Write or update XML documentation in the requested scope.
-
-### `--verify`: independent audit
-
-```text
-csharp-docs --verify
-csharp-docs path/to/Project --verify
-csharp-docs path/to/File.cs --verify
-csharp-docs path/A path/B --verify
-```
-
-Audit existing XML documentation against the code and project standard.
-
-This mode is read-only. A clean compiler result proves only part of the
-contract; semantic claims can still be false or stale.
-
-Verification must remain independent of authoring conclusions. For large or
-partitionable targets, use fresh isolated verifier sub-agents where practical
-rather than trusting a previous authoring pass.
-
-### `--verify --fix`: audit, then approved documentation fixes
-
-```text
-csharp-docs --verify --fix
-csharp-docs path/to/Project --verify --fix
-```
-
-`--fix` is valid only together with `--verify`.
-
-The workflow is:
-
-1. perform the complete verification pass;
-2. show the findings;
-3. obtain explicit approval for the documentation corrections;
-4. apply only approved documentation-only fixes;
-5. verify the corrected scope again.
-
-Invoking `--fix` expresses intent to fix findings, but does not skip review of
-the findings or approval of the actual documentation corrections.
-
-If the user asks for fixes after a normal `--verify` report, treat that as the
+`--fix` is valid only with `--verify`. It expresses intent to fix, but the
+findings are still shown and the corrections approved before anything is
+written. A user asking for fixes after a plain `--verify` report enters the
 same fix phase.
 
-## Target resolution
-
-For both authoring and verification:
-
-- file → operate on that file;
-- directory → operate on `.cs` files beneath it, excluding generated/build
-  output such as `bin` and `obj`;
-- several paths → handle each independently where practical;
-- no argument → resolve the relevant C# project from the working repository;
-- multiple plausible projects with no clear target → ask rather than guessing.
+Targets: a file is that file; a directory is every `.cs` file beneath it,
+excluding generated and build output such as `bin` and `obj`; no argument resolves the relevant project from the
+repository, and several plausible projects with no clear target means asking.
 
 ## Precedence
 
-When rules conflict, resolve them in this order:
+1. **Accuracy**: every sentence is true of the current code.
+2. **Completeness**: every required member and applicable tag is present.
+3. **Brevity**: the shortest block that is still true and complete.
+4. **Shape**: tag order, grouping, wrapping, and voice.
 
-1. **Accuracy** — every sentence must be true of the current code.
-2. **Completeness** — every required member and applicable tag must be present.
-3. **Depth** — say what the reader cannot learn from the signature alone.
-4. **Shape** — follow the required tag order, grouping, wrapping, and voice.
+Never sacrifice a higher rule for a lower one. Brevity never removes a required
+tag, nor the one clause a caller needs to avoid misusing the member.
 
-Never sacrifice a higher rule to satisfy a lower one.
+## Project standard
 
-## Determine the project standard
+Read `AGENTS.md`, `CLAUDE.md`, `.editorconfig`, and any documentation
+conventions, then a few documented files in the same package. Where this skill
+allows a choice of phrasing, follow the form the package already uses.
 
-Before writing documentation, read applicable repository instructions such as:
-- `AGENTS.md`
-- `CLAUDE.md`
-- `.editorconfig`
-- project-specific documentation conventions
+When the project documents members, document every member in scope to the same
+standard, private ones included: types, methods, properties, fields,
+constructors and primary-constructor parameters, interfaces, attributes, enum
+members, and extension-block receivers.
 
-If the project documents members, document every member in scope to the same standard, including:
-- public and private members;
-- methods;
-- properties;
-- fields;
-- constructors;
-- interfaces;
-- attributes;
-- enum members;
-- extension-block receivers.
-
-Private members are not exempt.
-
-Use the project's prescribed `<author>` and `<since>` values. When the project has no more specific value but follows this standard, use:
-
-```xml
-<author>Almighty-Shogun</author>
-<since>Unreleased</since>
-```
+Use the project's `<author>` and `<since>` values. Without a more specific
+value, use `<author>Almighty-Shogun</author>` and `<since>Unreleased</since>`.
+`<since>` records when a member was added; changing its signature or body
+leaves it alone.
 
 ## Verify before writing
 
-Every sentence is a claim about the code.
+Every sentence is a claim about the code. Read the member body, and open the
+callers, collaborators, or framework behavior a claim depends on before making
+it. Write only what was established; a short correct block is finished
+documentation. Never invent constraints, failure modes, rationale, guarantees,
+ownership semantics, or platform behavior.
 
-Before documenting a behavior:
-- read the member body;
-- inspect callers when the claim depends on callers;
-- inspect collaborators when the claim depends on another type;
-- inspect runtime/framework behavior only when necessary and verifiable.
+A claim such as "the caller already validates this" or "this is registered as a
+singleton" depends on another component: verify it there, or leave it out.
 
-Write only what was established.
+## House style
 
-If something cannot be established, leave it out. A short correct block is finished documentation; do not pad it to resemble neighboring blocks.
-
-Never invent:
-- constraints;
-- failure modes;
-- rationale;
-- guarantees;
-- ownership semantics;
-- platform behavior.
-
-## Substance
-
-Never merely restate the member or parameter name.
-
-Bad:
-
-```xml
-/// <summary>
-/// Configures the service.
-/// </summary>
-/// <param name="serviceCollection">The service collection.</param>
-```
-
-Documentation should add information a reader cannot reliably infer from the signature.
-
-### Tag responsibilities
+Documentation is compact and focused. Each tag states one fact in one short
+line. A block grows only when a caller would otherwise misuse the member, and
+that detail goes in a short `<remarks>`, not in the summary or the parameters.
 
 | Tag | Content |
 |---|---|
-| `<summary>` | What the member does and, when supported by the code, the important constraint, failure mode, or usage distinction a caller could otherwise miss. |
-| `<typeparam>` | What the type argument represents and what its constraint provides when that matters. |
-| `<param>` | What the value represents and what it changes; for flags, describe the behavior of both sides when meaningful. |
-| `<returns>` | What is returned, including meaningful null, empty, or failure cases. |
-| `<exception>` | Every exception that can escape and, where one exists, the non-throwing alternative or caller action. |
-| `<remarks>` | Verified reasoning, non-obvious consequences, compatibility constraints, or load-bearing implementation details. |
+| `<summary>` | One sentence: what the member does, or what the value is. |
+| `<typeparam>` | A short noun phrase: `The application's user entity.` |
+| `<param>` | A short noun phrase: `The cancellation token.` Add a clause only for behavior the caller must know: `The refresh token; unknown tokens are ignored.` |
+| `<returns>` | A short noun phrase: `The service collection.` Name a meaningful null or empty case in the same phrase: `The resolved application, or null when scoping is disabled.` |
+| `<exception>` | The condition, as a short clause: `The account is locked.` |
+| `<remarks>` | One to three plain sentences, only for what the other tags cannot hold. |
 
-These are not quotas. Include detail only when the implementation supports it.
+A plain noun phrase is finished documentation for a parameter whose role is
+obvious, such as a cancellation token, service collection, configuration, HTTP
+context, or logger.
 
-A member whose name, type, and attributes already state everything true is finished with one short sentence.
+Keep out of the docs: rationale and design argument ("so a token minted for one
+application cannot authenticate another"); framework internals beyond the one
+clause that explains a non-obvious choice; package wiring, registration order,
+and setup walkthroughs, which belong on the documentation site; lists of
+callers; what a consumer does with a value; defaults already visible in the
+signature; and provenance, such as how a defect was found or which version it
+failed under.
 
-A short block is correct when there is nothing more verifiable to say. Do not reach into a consumer for depth the member itself does not have; documentation borrowed from elsewhere is the failure this standard is most likely to produce, because it reads exactly like verified prose.
-
-## Cross-file promises
-
-Distinguish local facts from promises about other code.
-
-A claim such as:
-- "the caller already validates this";
-- "the dispatcher always supplies X";
-- "this is registered as a singleton";
-- "the runtime leaves the stream open";
-
-depends on another component.
-
-Open and verify that component before writing the claim.
-
-When useful, point to the enforcing type/member with `<see cref="..."/>` so the next reader can follow the guarantee.
-
-## Whose contract is it
-
-Before writing a sentence about a member, ask whether it would need editing if a different type changed.
-
-If it would, the sentence documents that other type. Put it there, and reference it from here with `<see cref="..."/>` when the reader needs the pointer.
-
-Duplicating another member's contract creates two copies of one fact in two files, with nothing keeping them in step. The copy that does not sit next to the behavior is the one that goes stale, and no build reports it.
-
-### Data carriers
-
-A DTO, request, response, options object, or entity property carries a value. It does not perform behavior.
-
-Document:
-- what the value is;
-- the constraints that live on the property itself: validation attributes, format, allowed values, nullability, whether it is required.
-
-Do not document:
-- what a service does with the value once it receives it;
-- the conditions under which a consumer rejects it;
-- the order in which another member validates it.
-
-That behavior belongs on the member performing it, where it can be checked against an implementation.
-
-Where the type as a whole has a contract worth stating, such as which rules an endpoint enforces and which it leaves to the caller, state it once in the type's own `<summary>` rather than repeating a fragment of it on every property.
-
-## Exceptions
-
-`<exception>` is required for every exception that can escape the member.
-
-Do not infer exceptions from names.
-
-Trace:
-- direct throws;
-- relevant callees;
-- wrappers such as reflection/invocation layers;
-- validation helpers;
-- parsing/serialization calls.
-
-Where a non-throwing alternative exists, name it concisely.
-
-## Fixed tag order
-
-Use this order and omit tags that do not apply:
-
-```text
-<summary>
-<typeparam>
-<param>
-<returns>
-<exception>
-<remarks>
-<author>
-<since>
-```
-
-Never reorder what remains.
-
-`<typeparam>` always precedes `<param>`.
-
-`<param>` tags must follow signature order.
-
-## Grouping
-
-Separate groups with a single bare `///` line.
-
-Rules:
-- `<typeparam>` and `<param>` form one group.
-- `<author>` and `<since>` form the final group.
-- Every other tag type opens its own group.
-
-Example:
+Verbose, the style this standard replaces:
 
 ```csharp
 /// <summary>
-/// Registers concrete types that inherit from or implement <typeparamref name="T"/>.
+/// Resolves the app for the current request, refusing rather than guessing when the host is unknown.
 /// </summary>
 ///
-/// <typeparam name="T">The base type or interface to search for.</typeparam>
-/// <param name="serviceLifetime">The lifetime applied to matching registrations.</param>
+/// <returns>The resolved app, or <c>null</c> when scoping is off and there is nothing to resolve.</returns>
 ///
-/// <returns>The <see cref="IServiceCollection"/> instance with matching implementations registered.</returns>
+/// <exception cref="UnknownAppException">
+/// Scoping is active and the request cannot be attributed: either the host maps to no configured application, or
+/// there is no request in flight at all, as when a background job mints a token. The second carries a <c>null</c>
+/// host rather than the one that failed.
+/// </exception>
+```
+
+Compact:
+
+```csharp
+/// <summary>
+/// Resolves the application for the current request.
+/// </summary>
+///
+/// <returns>The resolved application, or null when scoping is disabled.</returns>
+///
+/// <exception cref="UnknownAppException">
+/// Scoping is enabled and the application cannot be resolved.
+/// </exception>
+```
+
+### Remarks
+
+`<remarks>` holds what a caller or maintainer needs and the other tags cannot
+carry: a caller obligation (`Callers must validate account status before
+creating a session.`), a transaction or concurrency consequence (`This method
+saves changes but does not start its own transaction.`), a non-obvious edge
+case, the one-clause reason for a choice a future editor might undo (`Uses the
+exception handler feature because exception middleware may clear the current
+endpoint.`), or a pointer to the alternative (`Use <see cref="RegisterRequest"/>
+for public registration.`). One plain sentence per point; never praise the
+design as clean, maintainable, or flexible.
+
+### Whose contract is it
+
+Before writing a sentence, ask whether it would need editing if a different
+type changed. If so, it documents that type: put it there and reference it with
+`<see cref="..."/>` when the reader needs the pointer. A copy of another
+member's contract goes stale with no build to report it.
+
+A data carrier (DTO, request, response, options, entity property) documents
+what the value is, plus the constraints on the property itself, folded into the
+summary: `The access token lifetime in minutes (1–1440).` or `The device
+identified from the user agent, if available.` What a service does with the
+value belongs on that service. A contract of the type as a whole, such as which
+rules an endpoint enforces, is stated once in the type's `<summary>`, not in
+fragments on every property.
+
+### Exceptions
+
+`<exception>` is required for every exception that can escape. Trace direct
+throws, callees, reflection or invocation wrappers, validation helpers, and
+parsing calls; do not infer exceptions from names. Use the inline form when it
+fits on one line, and put several conditions for one exception in a single tag.
+
+### Voice
+
+- Methods use third-person singular: `Registers`, `Resolves`; a `Try` method
+  `Attempts to resolve...`.
+- Types: `Represents...` for records, entities, settings, and requests;
+  `Provides...` for extension classes and blocks; `Defines...` for enums;
+  `Thrown when...` for exception types; what they do for services and handlers.
+- Properties state the value with no `Gets`/`Sets` prefix; a boolean property
+  starts `Indicates whether...`.
+- A boolean-returning method summary starts `Determines whether...`; its
+  `<returns>` is `Whether...` or `True if...; otherwise, false.`, whichever the
+  package uses.
+- No imperative voice, no "This method..." opening, no second summary sentence.
+
+### Returns and defaults
+
+`<returns>` is a noun phrase. Fluent receiver returns use one fixed phrase per
+receiver: `The service collection.` For a result-less `Task`, follow the
+package: omit `<returns>`, or write `A task that completes when the response
+has been written.` For `Task<T>`, describe the result.
+
+Do not restate a visible signature default. When a default changes behavior the
+caller cannot infer, say what it causes: `or null for one second`.
+
+### References
+
+`<see cref>` for resolvable types and members, `<paramref>` and
+`<typeparamref>` for the current member's parameters, `<c>` for literals or a
+name from another overload. Disambiguate overloaded crefs to avoid `CS0419`,
+and confirm crefs into extension blocks with the build or generated XML.
+
+Write `/// <inheritdoc />` alone, with no `<author>` or `<since>` below it.
+
+Document an `extension` block's receiver with a `<param>` on the block: `The
+HTTP request.`, plus an ownership consequence such as whether a stream stays
+open, when a caller must know it.
+
+## Shape
+
+Tag order, omitting what does not apply:
+
+```text
+<summary> <typeparam> <param> <returns> <exception> <remarks> <author> <since>
+```
+
+`<param>` tags follow signature order. Separate groups with a bare `///` line:
+`<typeparam>` and `<param>` form one group, `<author>` and `<since>` the last,
+and every other tag type its own.
+
+```csharp
+/// <summary>
+/// Creates an authenticated session and issues access and refresh tokens.
+/// </summary>
+///
+/// <param name="user">The user receiving the session.</param>
+/// <param name="app">The application scope, or null when unscoped.</param>
+/// <param name="cancellationToken">The cancellation token.</param>
+///
+/// <returns>The issued tokens and their associated user.</returns>
+///
+/// <remarks>
+/// This method saves changes but does not start its own transaction.
+/// </remarks>
 ///
 /// <author>Almighty-Shogun</author>
-/// <since>Unreleased</since>
+/// <since>4.0.0</since>
 ```
 
-## Wrapping
-
-Wrap at the project's `.editorconfig` `max_line_length`.
-
-Count:
-- indentation;
-- `///`;
-- spaces;
-- XML tags;
-- text.
-
-When a one-line tag would exceed the limit, use:
-
-```csharp
-/// <param name="addType">
-/// Whether to register each implementation under <typeparamref name="T"/> instead of its concrete type.
-/// </param>
-```
-
-Do not reflow text beyond what the project's line limit requires.
-
-## Voice
-
-Method summaries use third-person singular:
-
-```text
-Registers
-Deserializes
-Adds
-```
-
-A property summary states what the value is, with no accessor prefix. `Gets`, `Sets`, and `Gets or sets` restate the signature, which already shows the accessors, and they consume the opening of the summary where the value's role belongs.
-
-```csharp
-/// <summary>
-/// The password being replaced.
-/// </summary>
-public required string CurrentPassword { get; set; }
-```
-
-Never use:
-- imperative voice;
-- "This method...";
-- an accessor prefix on a property summary;
-- filler that repeats the member name.
-
-## Defaults
-
-Do not restate a default value that is already visible in the signature.
-
-Instead explain what the relevant value causes.
-
-Prefer:
-
-```text
-If none are provided, the calling assembly is used.
-```
-
-over repeating `null`, `false`, or another signature default.
-
-## Returns
-
-`<returns>` uses a noun phrase rather than a prose sentence.
-
-For fluent receiver returns, keep one consistent shape, for example:
-
-```text
-The <see cref="IServiceCollection"/> instance with matching implementations registered.
-```
-
-Do not invent stylistic variants such as "The updated..." merely for variety.
-
-## References
-
-Use:
-- `<see cref="..."/>` for resolvable types and members;
-- `<paramref name="..."/>` for the current member's parameters;
-- `<typeparamref name="..."/>` for the current member's type parameters;
-- `<c>` for literals or for a parameter/name that belongs to a different overload and therefore cannot use `paramref`.
-
-For overloaded methods, use a fully disambiguated cref parameter list when needed to avoid `CS0419`.
-
-Crefs into extension blocks may resolve; verify with the generated XML/build rather than assuming.
-
-## Remarks
-
-`<remarks>` is where verified design reasoning belongs when source documentation needs to preserve it.
-
-Use it for:
-- why a non-obvious behavior exists;
-- compatibility constraints;
-- external protocol/spec requirements;
-- ownership/lifetime consequences;
-- implementation details a future editor might otherwise "simplify" away.
-
-Do not use `<remarks>` to praise the design or assert vague qualities such as "clean", "maintainable", or "flexible".
-
-Do not record provenance: how a defect was observed, what a test run measured,
-which environment or third-party version it failed under. Those are facts about
-an investigation, not properties of the code, and the accuracy rule does not
-catch them because the sentence is true.
-
-## Extension blocks
-
-Document the receiver of an `extension` block with a `<param>` on the block itself.
-
-Describe:
-- what the receiver represents;
-- ownership/lifetime behavior when relevant;
-- consequences such as whether a stream remains open.
+Use the one-line form whenever it fits within `.editorconfig`
+`max_line_length`, counting indentation, `///`, and tags; otherwise put the
+text on its own line between the opening and closing tag. A tag that needs
+several wrapped lines is usually too long: shorten it before wrapping. Do not
+reflow existing text beyond what the line limit requires.
 
 ## Changing documented code
 
-Whenever a documented member's body changes:
-
-1. Re-read its entire XML block.
-2. Correct every sentence the change invalidated.
-3. Re-check summary, remarks, rationale, returns, exceptions, and parameter effects.
-4. Do not limit updates to compiler-forced tags.
-
-When a member's behavior changes, search documentation in other files for references to that member/type and update stale cross-file claims.
-
-Deleting a stale sentence is always allowed.
-
-Do not invent a replacement merely to preserve block length.
+When a documented member's body changes, re-read its whole block and correct
+every sentence the change falsified, not only what the compiler forces. Search
+other files for docs that reference the member and fix stale claims there.
+Deleting a stale sentence is always allowed; do not invent a replacement to
+preserve block length.
 
 ## Code is the fact
 
-When code and documentation disagree, the documentation is wrong for the purpose of a documentation update.
-
-Never change code merely to make an existing doc block true.
-
-If the documented behavior appears preferable:
-- report the mismatch;
-- explain why the alternative behavior might be better on its own merits;
-- require explicit user approval before changing code;
-- treat the behavior change as a separate development task.
-
-A documentation pass does not silently resolve design disagreements.
+When code and documentation disagree, the documentation is wrong. Never change
+code to make a doc block true. If the documented behavior looks preferable,
+report the mismatch, argue for the change on its own merits, and treat it as a
+separate task that needs explicit approval.
 
 ## A defect is not a design
 
-A doc block describes what a member does. It is never where a defect is
-recorded, and a bug report must not leak into one.
+A doc block describes what a member does; it is never where a defect is
+recorded. A verified sentence can still be the wrong sentence: when documenting
+a member reveals behavior no one chose, do not write the sentence that
+legitimizes it. Describing broken behavior in the register of intended behavior
+turns a bug into a specification, and the next reader, including a later bug
+hunt, cannot tell the two apart.
 
-A verified sentence can still be the wrong sentence. When documenting a member
-reveals behavior no one chose, do not write the sentence that legitimizes it.
-Report the defect and leave the block short.
+Signals: the sentence explains why something can never work, why a value never
+arrives, why a supported-looking input is refused, or reads as rationale for
+behavior a caller would report as broken.
 
-A doc block is a contract surface. Describing broken behavior there in the
-register of intended behavior turns a bug into a specification, and the next
-reader, including a later bug hunt, has no way to tell the two apart.
+Leave the block short and report the defect to the user. Silently documenting
+it is wrong, and so is silently dropping it.
 
-Signals that a sentence is doing this:
-- it explains why something can never work;
-- it explains why a value never arrives;
-- it explains why a supported-looking input is refused;
-- it reads as rationale for behavior a caller would report as broken.
+## Build
 
-A short block is the correct outcome. Silently documenting the defect is not,
-and neither is silently dropping it: the report to the user is required.
+Build the relevant project after writing docs, and treat `CS1573`, `CS1591`,
+`CS1574`, and `CS0419` as documentation failures, not tolerable warnings.
+Inspect the generated XML when cref resolution is in doubt. A clean build does
+not prove a sentence is true.
 
-This mirrors **Code is the fact**. That rule stops documentation dictating code.
-This one stops code dictating a contract nobody chose.
+## Boundaries
 
-## Build verification
-
-After authoring or updating XML docs, build the relevant project when practical.
-
-Treat these as documentation failures:
-
-```text
-CS1573
-CS1591
-CS1574
-CS0419
-```
-
-Also inspect generated XML where necessary to confirm cref resolution or extension-block documentation.
-
-## Repository safety
-
-Default authoring mode may edit XML documentation blocks only unless the user
-explicitly requests broader code changes through another workflow.
-
-`--verify` is read-only until documentation fixes have been explicitly approved.
-
-Do not:
-- change implementation behavior to satisfy documentation;
-- stage, commit, or push;
-- create or delete branches;
-- amend or rebase;
-- reset, stash, clean, or checkout over unrelated user work;
-- overwrite unrelated changes.
-
-Protect unrelated uncommitted work.
-
-## Token efficiency
-
-- Read only the code needed to verify each claim.
-- Reuse repository conventions instead of restating them repeatedly.
-- Do not generate prose to fill empty tags.
-- Do not explain obvious signatures.
-- Inspect cross-file dependencies only when a documentation claim depends on them.
-- Keep documentation as short as correctness and useful depth permit.
+Authoring edits XML documentation blocks only; `--verify` edits nothing until
+fixes are approved. Leave implementation code and Git state alone, and protect
+unrelated uncommitted work.
 
 # Verification mode
 
-The following rules apply when `--verify` is active. They extend the shared authoring standard above rather than defining a second documentation standard.
+These rules extend the authoring standard for `--verify`.
 
-## Scale and sub-agents
+Verification stays independent of authoring: never trust a previous authoring
+pass's conclusions, and prefer fresh verifier sub-agents for that reason. Split
+large targets by project or directory across isolated sub-agents, giving
+each only this standard and its scope. Spot-check their actionable findings and
+downgrade anything without evidence to `UNCHECKED`. Never describe a partial
+pass as complete.
 
-Estimate target size before exhaustive reading.
+## Dimensions
 
-For large or naturally partitioned verification targets:
-- split by project, package, directory, or coherent area;
-- use isolated sub-agents per independent chunk;
-- avoid one giant context;
-- keep each agent's findings evidence-based and citable.
-
-Do not promote sub-agent findings blindly. Spot-check actionable findings and downgrade anything lacking evidence to `UNCHECKED`.
-
-Report coverage accurately. Never describe a partial pass as complete.
-
-## Verification dimensions
-
-### 1. Accuracy
-
-For each documented member, read the XML block and the implementation it sits on.
-
-Judge each semantic claim independently.
-
-Ask two questions of each claim, not one: is it true of the code, and does it
-describe something anyone intended. A sentence can pass the first and fail the
-second.
-
-Possible verdicts:
+**Accuracy.** Read each block against the implementation it sits on and judge
+each claim separately. Ask two questions: is it true, and does it describe
+something anyone intended.
 
 | Verdict | Meaning |
 |---|---|
 | `CONFIRMED` | Checked and true. Not normally reported. |
 | `FALSE` | Contradicted by the code. |
 | `STALE` | Describes behavior that no longer exists. |
-| `JUSTIFICATION` | Argues that the design is good without conveying a checkable behavior/constraint. |
-| `UNINTENDED` | True of the code, but describes a defect in the register of designed behavior. |
+| `UNINTENDED` | True of the code, but describes a defect as designed behavior. |
+| `JUSTIFICATION` | Argues the design is good without a checkable behavior. Reasoning that contradicts the code is `FALSE` or `STALE` instead. |
 | `UNVERIFIABLE` | The codebase cannot settle a checkable claim. |
 | `UNCHECKED` | Verification did not inspect what the claim depends on. |
 
-`UNVERIFIABLE` and `UNCHECKED` are different and must never be merged.
-
-### 2. Completeness
-
-Where the project's standard requires XML documentation, verify every in-scope member, including private members when required.
-
-Report:
-- `MISSING DOC` — member requires documentation but has none;
-- `MISSING TAG` — an applicable required tag is absent;
-- missing `<exception>` coverage for escaping exceptions;
-- missing meaningful null/empty/failure behavior in `<returns>` where required;
-- missing parameter/type-parameter coverage.
-
-Do not reduce missing documentation to a count only when the standard requires every member.
-
-### 3. Depth
-
-Documentation should say what a reader cannot reliably infer from the signature.
-
-Report `FILLER` when a block merely restates:
-- the member name;
-- the parameter name;
-- an obvious type;
-- a visible default value;
-
-without conveying meaningful behavior.
-
-Do not demand extra prose merely because neighboring members are longer.
-
-A short block is correct when there is nothing more verifiable to say.
-
-Do not invent missing "depth" findings from stylistic preference.
-
-### 4. Shape
-
-Verify the required project shape, including when applicable:
-- tag order;
-- grouping;
-- `<typeparam>` before `<param>`;
-- parameter order matching the signature;
-- line wrapping against `.editorconfig` `max_line_length`;
-- summary voice;
-- noun-phrase `<returns>`;
-- correct `paramref` / `typeparamref` / `see` / `c` usage;
-- `<author>` / `<since>`;
-- extension receiver `<param>`;
-- resolvable and correctly targeted crefs.
-
-Shape findings come after accuracy, completeness, and depth.
-
-## Try to prove a claim true before reporting it false
-
-A false positive can cause a correct doc to be "fixed" into something wrong.
-
-Before reporting `FALSE` or `STALE`, ask what would make the claim true and check it.
-
-Examples:
-
-- Is the supposedly invalid branch unreachable because of an earlier guard?
-- Is a guarantee enforced by a caller, constructor, factory, or type constraint?
-- Does the sentence refer to a different code path?
-- Is the issue merely imprecise wording rather than behavior that would mislead a reader?
-
-Only report the finding after this defense fails.
-
-Include decisive evidence.
-
-## Resolve `<inheritdoc />`
-
-A member using `<inheritdoc />` inherits a contract and remains in scope.
-
-Resolve the inherited documentation to its source, then verify the current implementation against it.
-
-When several implementations share an inherited contract, check whether each implementation honors that contract.
-
-Report divergence against the implementation and identify the inherited source.
-
-## High-yield semantic checks
-
-### Cross-component claims
-
-Claims such as:
-- "already validated by the caller";
-- "the dispatcher supplies this";
-- "already logged";
-- "registered as a singleton";
-
-depend on other files.
-
-Open those files before judging the claim.
-
-### Rewritten behavior
-
-Compare summaries and remarks against current behavior, especially where Git history shows implementation changes.
-
-History is a signal, not proof.
-
-### Exceptions
-
-Check both directions:
-- every documented exception can actually escape;
-- every exception that can escape is documented.
-
-Trace relevant callees and wrappers.
-
-### Returns
-
-Verify:
-- null behavior;
-- empty behavior;
-- failure behavior;
-- fluent receiver return claims.
-
-### Parameters
-
-Verify the stated effect.
-
-For flags, check both meaningful states.
-
-Do not treat a restated signature default as useful documentation.
-
-### Remarks
-
-Distinguish:
-
-**Explanation**  
-Checkable reasoning tied to actual behavior. Verify normally.
-
-**Justification**  
-Statements such as "this keeps the API clean" or "this is the most maintainable approach". Report as `JUSTIFICATION`.
-
-**Contradicted reasoning**  
-Reasoning that describes behavior the implementation does not have. Report as `FALSE` or `STALE`, not merely justification.
-
-### Cross-references
-
-A cref can resolve yet point to the wrong member after a refactor. Verify both resolution and semantic target.
-
-For overloaded methods, confirm disambiguation when needed.
-
-For extension blocks, confirm resolution through build/generated XML where necessary.
-
-## Build/compiler verification
-
-Run the relevant build when practical.
-
-Treat these as documentation failures:
-
-```text
-CS1573
-CS1591
-CS1574
-CS0419
-```
-
-Do not dismiss them as tolerable warnings when the project follows this standard.
-
-A clean build does not prove semantic accuracy.
-
-## Code and documentation disagreement
-
-When code and docs disagree, report that the documentation is wrong.
-
-Do not change code to make the documentation true.
-
-If the documented behavior appears preferable, record that only as a separate design observation and require explicit user approval before any behavior change.
-
-The argument for changing code must stand on its own merits, not on the existence of an old doc sentence.
-
-## Report ordering
-
-Group findings by file and order them by the documentation precedence.
-
-Recommended order:
-
-1. `FALSE`
-2. `STALE`
-3. `JUSTIFICATION`
-4. `UNVERIFIABLE`
-5. `UNCHECKED`
-6. `MISSING DOC`
-7. `MISSING TAG`
-8. `FILLER`
-9. shape/compiler findings
-
-Within a category, prioritize findings most likely to mislead callers or maintainers.
-
-## Finding format
-
-For semantic findings:
+`UNVERIFIABLE` and `UNCHECKED` are different and never merged.
+
+**Completeness.** `MISSING DOC` for a member that requires docs and has none;
+`MISSING TAG` for an absent applicable tag, including escaping exceptions,
+null/empty/failure returns, and parameters. List missing docs individually, not
+as a count.
+
+**Brevity.** `VERBOSE` for a block carrying what the house style keeps out: a
+multi-sentence summary, rationale, wiring or caller lists, consumer behavior on
+a data carrier, a restated default, a tag running to several lines of
+explanation, or narrating remarks. A plain noun phrase such as `The
+cancellation token.` is the house style, not a finding.
+
+**Shape.** Tag order, grouping, parameter order, one-line form and wrapping,
+voice, noun-phrase returns, reference tags, `<author>`/`<since>` (none below
+`<inheritdoc />`), the extension receiver `<param>`, and correctly targeted
+crefs.
+
+## Before reporting FALSE or STALE
+
+A false positive gets a correct doc "fixed" into a wrong one. First ask what
+would make the claim true and check it: an earlier guard, a caller or factory
+enforcing it, a different code path, or wording that is merely imprecise.
+Report only after that defense fails, with the decisive evidence.
+
+`<inheritdoc />` members stay in scope: resolve the inherited contract, check
+each implementation honors it, and report a divergence against the
+implementation, naming the inherited source. For cross-component claims, open the other
+component. Check exceptions in both directions, flags in both states, and that
+a cref which resolves still points at the right member after a refactor. Git
+history is a signal, not proof.
+
+## Report
+
+Group by file, ordered: `FALSE`, `STALE`, `UNINTENDED`, `JUSTIFICATION`,
+`UNVERIFIABLE`, `UNCHECKED`, `MISSING DOC`, `MISSING TAG`, `VERBOSE`, then shape
+and compiler findings. Within a category, lead with what is most likely to
+mislead callers or maintainers.
 
 ```text
 path/Thing.cs:60  FALSE
-  Claim:    "Builds the dispatch table by resolving every registered command once."
-  Code:     Commands are resolved per invocation instead.
-  Checked:  Thing.cs:41-58, Thing.cs:96-120.
+  Claim:     "Builds the dispatch table by resolving every registered command once."
+  Code:      Commands are resolved per invocation instead.
+  Checked:   Thing.cs:41-58, Thing.cs:96-120.
   Ruled out: no factory or alternate constructor pre-resolves them.
-```
 
-For completeness/shape findings:
-
-```text
 path/Thing.cs:88  MISSING TAG
   Member:   Parse(string value)
   Missing:  <exception cref="FormatException">
   Checked:  Parse calls Parser.Parse at Parser.cs:31, which can propagate FormatException.
-```
 
-For unchecked claims:
+path/Thing.cs:112  VERBOSE
+  Member:   AddAuth(IConfiguration configuration, bool registerExceptionHandler)
+  Excess:   <param name="registerExceptionHandler"> explains package wiring and registration order.
+  Compact:  "Whether to register the authentication exception handler."
 
-```text
-path/Thing.cs:88  UNCHECKED
+path/Thing.cs:140  UNCHECKED
   Claim:    "The dispatcher has already validated the payload."
   Status:   Not established.
   Needed:   The dispatcher lies outside the approved verification scope.
 ```
 
-Every actionable finding should identify the evidence that established it.
-
-Do not report a semantic finding you cannot support.
-
-## Coverage summary
-
-Close with:
-- files read;
-- files skipped and why;
-- counts by verdict/category;
-- build status if run;
-- whether verification was complete or partial.
-
-State plainly when documentation is accurate throughout.
-
-Do not invent marginal findings to demonstrate effort.
+Close with files read, files skipped and why, counts per category, build
+status, and whether the pass was complete. Say plainly when the docs are
+accurate throughout; never invent marginal findings.
 
 ## `--fix`
 
-Without `--fix`, stop after the report.
-
-With `--verify --fix`, or when the user asks after reviewing the report:
-
-1. Apply only approved documentation corrections.
-2. Re-read the code before writing replacement text.
-3. Treat every replacement sentence as a new claim requiring verification.
-4. Delete stale or unverifiable text when no honest replacement is needed.
-5. Replace design praise with verified behavior or remove it.
-6. Follow this skill's authoring standard for all rewritten blocks.
-7. Never modify implementation code.
-8. Rebuild afterward and verify no XML-doc compiler failures remain.
-
-If a finding cannot be corrected through documentation alone, leave it as a finding.
-
-## Safety
-
-- Never edit before reporting. `--verify --fix` still requires review of findings and explicit approval of the documentation corrections.
-- Never change code to satisfy documentation.
-- Never commit, stage, push, amend, rebase, or create/delete branches.
-- Never reset, stash, clean, or checkout over unrelated user work.
-- Never call an unchecked claim confirmed.
-- Never call an unchecked claim unverifiable.
-- Never report a claim false without trying to establish it as true.
-- Never describe skipped coverage as complete.
-- Protect unrelated uncommitted work.
-
-## Token efficiency
-
-- Split large targets into isolated sub-agent scopes.
-- Mechanically inspect repeated structures before reading every file serially.
-- Give sub-agents only the documentation standard and scope they need.
-- Keep findings compact and evidence-backed.
-- Do not repeat confirmed claims in the report.
-- Use Git history only when it helps settle a claim.
-- Prefer decisive code evidence over lengthy prose analysis.
+Without `--fix`, stop after the report. With it, apply only the approved
+corrections: re-read the code first, treat every replacement sentence as a new
+claim, delete stale or unverifiable text when no honest replacement exists,
+follow the authoring standard, then rebuild and verify the corrected scope
+again. A finding documentation alone cannot fix stays a finding.
