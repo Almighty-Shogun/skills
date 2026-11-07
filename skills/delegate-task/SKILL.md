@@ -6,106 +6,62 @@ argument-hint: "[--interactive | --autonomous] <task>"
 
 # Delegate Task
 
-Use for non-trivial coding tasks where isolated investigation, implementation, and review improve correctness or reduce context pollution.
+For non-trivial coding tasks where isolating investigation, implementation, and
+review improves correctness or keeps the main context small.
 
-Workflow: `Research -> Implement -> Validate`
-
-Use a fresh agent for each needed phase. Carry conclusions forward, never full agent transcripts.
+Workflow: `Research -> Implement -> Validate`, with a fresh agent for each phase
+that is needed. Carry conclusions forward, never transcripts.
 
 ## Modes
 
-- `--interactive`: research first, show the plan, wait for user approval, then implement and validate.
-- `--autonomous`: research, implement, and validate without pausing unless a material user decision is required.
-- no flag: infer the mode from task risk, ambiguity, scope, and conversation context.
+- `--interactive`: research, show the plan, wait for approval, then implement
+  and validate.
+- `--autonomous`: research, implement, and validate without pausing, unless a
+  material decision needs the user.
+- No flag: choose interactive when requirements are materially ambiguous,
+  approaches carry real trade-offs, the work touches architecture, public API,
+  schema or migrations, auth or security, destructive behavior, or broad
+  repository changes, or the user wants to approve the approach. Choose
+  autonomous when the expected behavior and acceptance criteria are clear and
+  the change is a localized fix, narrow feature, or constrained refactor. When
+  unsure, interactive for high-impact decisions, autonomous otherwise.
 
-Treat the flags as mode directives in the user's invocation.
+An autonomous run that uncovers a decision that could change behavior, API,
+data, security, or scope pauses for the user; minor choices settled by project
+conventions do not.
 
-### Infer interactive when
+Agents have overhead. A typo, obvious rename, one-line fix, or mechanical change
+with no design uncertainty is implemented directly with the relevant check run.
+High-impact, security, and data-changing work always gets independent
+validation.
 
-- requirements are materially ambiguous
-- multiple approaches have meaningful tradeoffs
-- architecture, public API, schema/migrations, auth/security, destructive behavior, or broad repository changes are involved
-- user preference determines the correct design
-- the user asks to approve/review the approach first
+## Task Contract
 
-### Infer autonomous when
-
-- expected behavior is clear
-- acceptance criteria are explicit or obvious from tests/current behavior
-- the task is a localized bug fix, narrow feature, or constrained refactor
-- existing project conventions make the implementation choice clear
-
-If uncertain, choose interactive for high-impact decisions; otherwise autonomous.
-
-If autonomous research uncovers a decision that could materially change behavior, API, data, security, or scope, pause for the user. Do not pause for minor implementation choices resolvable from project conventions.
-
-## Avoid unnecessary delegation
-
-Sub-agents have overhead. If the task is trivial, skip unnecessary phases.
-
-Examples: typo, obvious rename, one-line config/import fix, mechanical change with no design uncertainty.
-
-For trivial autonomous tasks, implement directly and run the relevant check. Never skip independent validation for high-impact/security/data-changing changes.
-
-## Context rules
-
-Before delegation, distill the request into a compact Task Contract:
-
-- Goal
-- Scope
-- Constraints
-- Non-goals, only when they materially prevent scope creep
-- Acceptance criteria
-
-Only include conversation details needed for the task.
-
-For every agent:
-
-- give only the Task Contract plus the minimum phase-specific handoff
-- let it inspect repository files, tests, git status/diff, and build output directly
-- prefer paths/symbols over pasted source
-- never forward full transcripts, reasoning, exploration history, large command output, or repository walkthroughs
-- omit discarded approaches unless their rejection matters to the next phase
-
-Default handoff ceilings, not targets:
-
-- Research: ~500 tokens
-- Implementation: ~300 tokens
-- Validation: ~400 tokens
-
-Use less whenever possible. Correctness beats the token budget.
+Distill the request into Goal, Scope, Constraints, Acceptance criteria, and
+Non-goals when they prevent scope creep. Each agent gets this contract plus the
+minimum phase handoff, and inspects files, tests, git state, and build output
+itself. Prefer paths and symbols over pasted source. Handoffs are the shortest
+text the next phase can act on without re-reading what the previous phase
+read.
 
 ## Workflow boundary
 
-Use this skill when the intended outcome is an implementation or repository change.
-
-Do not silently turn it into a substitute for specialized discovery/design workflows such as:
-
-- `bughunt` for proactively discovering and proving unknown bugs
-- `structure-review` for finding structural/architectural improvements
-- `api-design` for designing a public or cross-boundary contract
-- `source-research` for substantial external research
-
-If the user explicitly asks to implement an existing artifact or finding from one of those workflows, treat that artifact as input. Verify that it is still applicable, then avoid repeating the completed analysis.
+This skill is for implementing a change. Proactive bug discovery is `bughunt`,
+structural review is `structure-review`, contract design is `api-design`, and
+substantial external research is `source-research`. When the user asks to
+implement an artifact from one of those, treat it as input: confirm it still
+applies, then do not repeat its analysis.
 
 ## Research
 
-Use a fresh research agent when investigation is needed.
-
-It must:
-
-- inspect relevant code only
-- identify current behavior/root cause
-- determine the smallest correct approach
-- reuse existing project conventions/abstractions
-- identify affected files/symbols
-- identify important constraints/edge cases
-- refine acceptance criteria if needed
-- for bug fixes, reproduce or otherwise prove the reported failure where practical before designing the fix
-- reuse prior approved design/research artifacts when applicable instead of redoing their work
-- not modify files
-
-Return only:
+Skip it when the implementation is obvious, the user supplied an exact plan,
+tests define the fix, or an approved artifact already settles the design. When
+needed, a fresh read-only research agent inspects the relevant code, finds the
+current behavior or root cause, and picks the smallest correct approach that
+reuses existing conventions and abstractions. For a bug fix it reproduces or
+otherwise establishes the failure first, preferring an existing failing test or
+a minimal reproduction; it does not design a fix for a failure it cannot
+establish, and states the limitation when CI evidence has to stand in.
 
 ```text
 Research Handoff
@@ -116,46 +72,18 @@ Research Handoff
 - Acceptance criteria: ...
 ```
 
-No investigation diary, long code excerpts, or generic background.
-
-Skip research when the implementation is already obvious, the user supplied an exact plan, tests clearly define the fix, or an approved/relevant repository artifact already settles the design and only needs a quick applicability check.
-
-For bug fixes, prefer an existing failing test or a minimal reproduction. Do not spend significant effort designing a solution for a failure that cannot be reproduced or otherwise established. If reproduction is impractical but repository/CI evidence is decisive, state that constraint briefly.
-
-## Interactive approval
-
-In `--interactive` mode:
-
-1. complete research
-2. show the concise Research Handoff
-3. wait for approval/adjustments
-4. implement only after approval
-
-If the user makes a small adjustment, update only the affected handoff items; do not repeat research unnecessarily.
+In interactive mode, show this handoff and wait. A small adjustment updates the
+affected items without repeating research.
 
 ## Implementation
 
-Use a fresh implementation agent.
-
-Give it only:
-
-- Task Contract
-- final/approved Research Handoff, if one exists
-- repository access
-
-It must:
-
-- make the smallest correct change
-- follow existing conventions
-- avoid unrelated refactors/speculative improvements
-- preserve unrelated user work
-- never reset, stash, clean, checkout over, or otherwise overwrite unrelated changes
-- touch only files needed for the task unless directly related breakage requires more
-- add/update relevant tests when needed
-- run the narrowest useful tests/build/lint/type checks
-- not commit, push, create branches, rebase, amend, or perform other Git-history mutations
-
-Return only:
+A fresh agent with the Task Contract, the approved handoff, and repository
+access makes the smallest correct change: existing conventions, no unrelated
+refactors or speculative improvements, only the files the task needs plus
+directly related breakage, tests added or updated where needed, and the
+narrowest useful checks run. It inspects the working tree before editing and
+changes it only: no commits, pushes, branches, or history edits, and unrelated
+uncommitted work is preserved.
 
 ```text
 Implementation Handoff
@@ -165,37 +93,18 @@ Implementation Handoff
 - Unresolved: <only if applicable>
 ```
 
-Do not forward this handoff to validation unless the validator cannot obtain a necessary fact from repository state.
+The validator does not receive this handoff unless it needs a fact the
+repository cannot provide.
 
 ## Validation
 
-Use a fresh validation agent.
-
-Give it:
-
-- Task Contract
-- acceptance criteria
-- direct access to current code and git diff
-
-Do not give it the implementation agent's reasoning or self-assessment.
-
-Check independently for:
-
-- correctness and missed requirements
-- regressions/edge cases
-- unintended API/behavior changes
-- security implications when relevant
-- meaningful performance regressions when relevant
-- dependency additions/upgrades and their implications when relevant
-- unnecessary complexity
-- whether a refactor actually reduces complexity rather than merely moving it
-- relevant tests/checks
-
-Passing tests/checks is necessary evidence, not sufficient proof of correctness.
-
-Do not rewrite correct code for stylistic preference.
-
-If issues exist, return only actionable findings ordered by severity:
+A fresh agent with the Task Contract, the acceptance criteria, and direct access
+to the code and diff, without the implementer's reasoning or self-assessment,
+checks correctness and missed requirements, regressions and edge cases,
+unintended API or behavior changes, security, performance, and dependency
+implications where relevant, unnecessary complexity, whether a refactor reduced
+complexity or merely moved it, and the relevant tests. Passing checks are
+evidence, not proof. It does not rewrite correct code for style.
 
 ```text
 Validation
@@ -203,62 +112,23 @@ Validation
 2. [Medium] ...
 ```
 
-Otherwise return:
-
-```text
-Validation passed. No actionable issues found.
-```
+or `Validation passed. No actionable issues found.`
 
 ## Fix loop
 
-If validation finds issues:
-
-1. use a fresh fix agent
-2. give it only Task Contract + validation findings + repository access
-3. fix only those issues and directly related breakage
-4. run relevant checks
-5. use a fresh validator again
-
-Maximum 2 fix/validate iterations by default. If meaningful issues remain, stop and report the blockers instead of looping indefinitely.
+Findings go to a fresh fix agent with the Task Contract, the findings, and
+repository access; it fixes only those and directly related breakage, runs the
+checks, and a fresh validator runs again. At most two fix and validate rounds by
+default; if meaningful issues remain, stop and report the blockers.
 
 ## Parallel research
 
-Do not parallelize by default. Use multiple research agents only when the task has genuinely independent uncertainty (for example architecture vs security or separate subsystems).
+Use several research agents only for genuinely independent uncertainty, such as
+separate subsystems, and merge their findings into one Research Handoff before
+implementation.
 
-Synthesize parallel findings into one compact Research Handoff before implementation. Never pass multiple full reports forward.
+## Output
 
-
-## Repository safety
-
-This skill modifies the working tree only.
-
-It must not:
-- commit;
-- push;
-- create or delete branches;
-- amend or rebase;
-- reset;
-- stash unrelated work;
-- run destructive clean operations;
-- checkout over unrelated user changes.
-
-Dedicated Git/PR skills own those operations.
-
-Always inspect the working tree before modification and preserve unrelated changes.
-
-## User-facing output
-
-Interactive mode normally shows:
-
-- Research Handoff for approval
-- concise implementation result
-- validation result
-
-Autonomous mode normally shows only:
-
-- concise implementation result
-- checks performed
-- validation result
-- remaining blockers, if any
-
-Do not expose internal transcripts or chain-of-thought.
+Interactive: the Research Handoff for approval, then the implementation result
+and the validation result. Autonomous: the implementation result, checks run,
+validation result, and any remaining blockers. Never expose agent transcripts.
