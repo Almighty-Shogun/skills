@@ -154,8 +154,13 @@ Use the repository's configured merge method; otherwise a merge commit, which
 preserves the branch commits:
 
 ```bash
-gh pr merge <number> --repo <slug> --merge
+gh pr merge <number> --repo <slug> --merge \
+  --match-head-commit <headRefOid>
 ```
+
+`<headRefOid>` is the head SHA that was reviewed and re-checked in step 8, so
+GitHub rejects the merge if anything was pushed since. If it does, stop and
+show the new state; never drop `--match-head-commit` or retry automatically.
 
 Never `--squash`, `--rebase`, or force options. Delete the remote head branch
 only for an ordinary same-repository disposable branch the user owns that is
