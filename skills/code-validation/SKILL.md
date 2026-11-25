@@ -1,7 +1,6 @@
 ---
 name: code-validation
-description: Token-efficient independent code review using an isolated validation agent. Validates current changes against requirements and repository behavior without rewriting correct code.
-disable-model-invocation: true
+description: Token-efficient independent code review using an isolated validation agent. Validates current changes against requirements and repository behavior without rewriting correct code. Use only when the user or repository instructions explicitly ask for it.
 ---
 
 # Code Validation

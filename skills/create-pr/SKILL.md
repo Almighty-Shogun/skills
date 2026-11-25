@@ -6,9 +6,9 @@ description: >-
   name from the actual change, states the file scope, delegates staging and
   commits to the commit skill, writes the title and body from repository
   instructions, and runs gh pr create only after approval. Never merges,
-  force-pushes, tags, or publishes.
+  force-pushes, tags, or publishes. Use only when the user or repository
+  instructions explicitly ask for it.
 argument-hint: "[fix/<slug> | feat/<slug> | improvement/<slug> | chore/<slug> | docs/<slug>]"
-disable-model-invocation: true
 ---
 
 # Create PR

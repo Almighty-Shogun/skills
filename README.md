@@ -136,11 +136,15 @@ follow the invocation, and each skill's argument hint is in the table above:
 /shogun-nuget AspNet.Auth how do I scope tokens per host
 ```
 
-Most skills here are **manual only**: they carry `disable-model-invocation: true`
-and run when you ask for them, never on the agent's own judgement. The two
-package references, `shogun-node` and `shogun-nuget`, are the exception. They
-load automatically when work genuinely depends on one of those packages, which is
-what makes them useful without being asked for by name.
+Two skills are **manual only**: `merge-pr` and `release` carry
+`disable-model-invocation: true` and run only when you invoke them by name.
+`create-pr`, `code-validation` and `simplify-code` can be started by the agent,
+but their `description` limits them to when you or the repository instructions
+explicitly ask for them. The others can also load on the agent's own judgement
+when a task matches their `description`. That is what lets the two
+package references, `shogun-node` and `shogun-nuget`, load when work genuinely
+depends on one of those packages, and `skill-feedback` log a signal the moment a
+skill is corrected or falls short.
 
 ## 🧹 Uninstall
 
@@ -233,9 +237,11 @@ npx skills update -g
 
 Reinstalling and choosing the symlink stops it happening again.
 
-**A skill never triggers on its own.** That is the default. Everything except
-`shogun-node` and `shogun-nuget` sets `disable-model-invocation: true` and has to
-be invoked by name.
+**A skill never triggers on its own.** Check its frontmatter. `merge-pr` and
+`release` set `disable-model-invocation: true` and have to be invoked by name.
+`create-pr`, `code-validation` and `simplify-code` trigger only on an explicit
+request from you or the repository instructions. Any other skill triggers only
+when the task matches its `description`.
 
 **A skill triggers when you did not want it.** Narrow the `description`. It is
 the only thing read before the skill loads, so an over-broad description is what

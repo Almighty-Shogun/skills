@@ -1,8 +1,7 @@
 ---
 name: simplify-code
-description: Simplify existing code while preserving behavior. Supports --scope and an analysis-only --report mode, uses isolated sub-agents for independent areas, respects historical intent and public contracts, validates changes independently, and never commits or pushes automatically.
+description: Simplify existing code while preserving behavior. Supports --scope and an analysis-only --report mode, uses isolated sub-agents for independent areas, respects historical intent and public contracts, validates changes independently, and never commits or pushes automatically. Use only when the user or repository instructions explicitly ask for it.
 argument-hint: "[--scope <scope>] [--report]"
-disable-model-invocation: true
 ---
 
 # Simplify Code
