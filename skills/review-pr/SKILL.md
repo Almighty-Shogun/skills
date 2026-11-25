@@ -18,8 +18,9 @@ Review one pull request and report what is wrong with it.
 Read-only for code: never edit, stage, commit, or revert, and never merge,
 close, approve, or request changes. The only remote mutation is `gh pr comment`,
 reached only through `--comment` and only after the user approves the exact
-text. A trial merge for building is allowed with a clean working tree and is
-always aborted before finishing, on every exit path.
+text. A trial merge for building runs only in a temporary detached worktree,
+never in the user's checkout, and the worktree is always removed before
+finishing, on every exit path.
 
 ## Invocation
 
@@ -67,10 +68,13 @@ find "<dir>" \( -name .git -o -name node_modules -o -name vendor \) -prune -o \
 
 ## 2. Resolve the pull request
 
-Without a number or URL:
+Without a number or URL, look up the current branch's pull request and use it
+when one exists. When there is none, or `git -C <dir> branch --show-current` is
+empty (detached `HEAD`), list the open pull requests instead:
 
 ```bash
-gh pr view --repo <slug> --json number,title,url
+gh pr view "$(git -C <dir> branch --show-current)" --repo <slug> \
+    --json number,title,url
 gh pr list --repo <slug> --state open --json number,title,isDraft,headRefName
 ```
 
@@ -83,8 +87,8 @@ One pull request per run. Read it:
 
 ```bash
 gh pr view <number> --repo <slug> --json \
-    number,title,body,state,isDraft,author,baseRefName,headRefName,url,\
-additions,deletions,changedFiles,statusCheckRollup,comments,reviews
+    number,title,body,state,isDraft,author,baseRefName,headRefName,headRefOid,\
+url,additions,deletions,changedFiles,statusCheckRollup,comments,reviews
 ```
 
 A merged or closed pull request can still be reviewed; say plainly that the
@@ -122,31 +126,41 @@ moved file, or dropped branch is where breakage hides.
 ## 5. Build the merge result
 
 Skip with `--no-build`, or when every check succeeded; say which in the report.
-Otherwise build the **merge result**, since that is what the base branch would
-receive. This needs a clean working tree: if `git status --short` shows
-anything, skip the build, say so, and continue the review.
+Also skip, and say so, when `<slug>` is not the `origin` repository: this
+checkout cannot build that pull request. Otherwise build the **merge result**,
+since that is what the base branch would receive. Build it in a temporary
+detached worktree at a new path `<worktree>` in the scratchpad or temp
+directory, so the user's checkout is never touched:
 
 ```bash
-git -C <dir> fetch origin pull/<number>/head:review-pr-<number>
-git -C <dir> merge --no-commit --no-ff review-pr-<number>
+git -C <dir> fetch origin <baseRefName>
+git -C <dir> worktree add --detach "<worktree>" origin/<baseRefName>
+git -C "<worktree>" fetch origin pull/<number>/head
+git -C "<worktree>" rev-parse FETCH_HEAD
+git -C "<worktree>" merge --no-commit --no-ff FETCH_HEAD
 ```
 
-A conflict is a blocking finding. With the merge staged, run the repository's
-own checks, discovered from instruction files, `package.json` scripts, a
-`Makefile`, task files, or CI workflows; prefer the release-preparation
-verification surface, and record the commands that ran. Never hardcode one.
+The head fetch writes only `FETCH_HEAD`, never a named ref. If `FETCH_HEAD` is
+not the step 2 `headRefOid`, the head moved during the review: skip the merge
+and say so. A conflict is a blocking finding. With the merge staged, prepare
+`<worktree>` as the repository instructs, such as installing dependencies,
+since a fresh worktree has none and lacks local untracked config. A setup
+failure makes the build errored or skipped, not a blocking finding. Then run
+the repository's own checks in `<worktree>`, discovered from instruction files,
+`package.json` scripts, a `Makefile`, task files, or CI workflows; prefer the
+release-preparation verification surface, and record the commands that ran.
+Never hardcode one.
 
-Undo the trial merge whether the build passed, failed, or errored, and confirm
-the tree is clean again:
+Remove the worktree whether the build passed, failed, or errored, or the
+merge never started, and confirm it is gone:
 
 ```bash
-git -C <dir> merge --abort
-git -C <dir> branch -D review-pr-<number>
-git -C <dir> status --short
+git -C <dir> worktree remove --force "<worktree>"
+git -C <dir> worktree list
 ```
 
-If it is not clean, say so prominently: a half-applied merge left behind is
-worse than any finding.
+If it is still listed, say so prominently: a leftover worktree is worse than
+any finding.
 
 ## 6. Review
 
@@ -273,8 +287,9 @@ After approval, post with `gh pr comment <number> --repo <slug> --body-file
 
 ## Safety
 
-- Never leave a trial merge in progress, and run `git branch -D` only on the
-  `review-pr-<number>` branch this skill created.
+- Never merge, build, or create a branch in the user's checkout, and never
+  leave the temporary worktree behind; run `git worktree remove` only on the
+  worktree this skill created.
 - Never stash, discard, or commit the user's work to make a build possible;
   skip the build instead.
 - Never describe an inference as an observation, or a pull request as verified
@@ -291,7 +306,7 @@ Verification`:
 | Hint | Affects |
 |---|---|
 | Required verification command per change scope | step 5 |
-| Default branch, when not the GitHub-reported default | steps 1, 5 |
+| Default branch, when not the GitHub-reported default | step 1 |
 | Repository-specific review checklist or forbidden patterns | step 6 |
 | What counts as blocking for this repository | step 7 |
 | Pull request body style, which the posted comment follows | step 8 |
