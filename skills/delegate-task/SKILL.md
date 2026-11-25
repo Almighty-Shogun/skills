@@ -44,6 +44,10 @@ itself. Prefer paths and symbols over pasted source. Handoffs are the shortest
 text the next phase can act on without re-reading what the previous phase
 read.
 
+Start each phase agent with an explicit model and effort level that fits the
+phase: highest for implementation and validation, lower for simple read-only
+research.
+
 ## Workflow boundary
 
 This skill is for implementing a change. Proactive bug discovery is `bughunt`,
