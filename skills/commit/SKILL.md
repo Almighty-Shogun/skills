@@ -4,8 +4,9 @@ description: >-
   Create focused commits from the current working tree: group changes by
   atomic intent, propose the plan, stage narrowly, validate each group before
   committing, and ask before pushing. Uses feat, fix, improvement, chore, and
-  docs types by default. Never creates release commits or rewrites history.
-argument-hint: "[--auto-commit] [--auto-push] [--auto-all]"
+  docs types by default. Never rewrites history or creates release commits,
+  except a release-metadata commit the release skill requests.
+argument-hint: "[--auto-commit] [--auto-push] [--auto-all] [<dir> [<path>...]]"
 ---
 
 # Commit
@@ -17,9 +18,11 @@ review, revert, and cherry-pick. The goal is not the fewest commits.
 
 Allowed: narrow staging, `git commit` for approved groups, and `git push` after
 separate approval or an auto-push flag. Never amend, rebase, reset,
-force-push, revert user work, create or delete branches, create release or
-version commits, stage broadly with `git add .` or `git add -A`, bypass hooks
-with `--no-verify`, or edit `.git` directly. If Git write access is blocked,
+force-push, revert user work, create or delete branches (publishing the current
+branch with `git push -u` is not creating one), create release or version
+commits (the only exception is a release-metadata commit the `release` skill
+requests), stage broadly with `git add .` or `git add -A`, bypass hooks with
+`--no-verify`, or edit `.git` directly. If Git write access is blocked,
 report the operation instead of working around it.
 
 ## Invocation
@@ -32,6 +35,12 @@ The flags skip confirmation only, never inspection, grouping, safety checks, or
 validation.
 Genuinely ambiguous grouping is still asked about.
 
+A caller such as `create-pr` or `release` may pass a scope: a repository root
+`<dir>` and a list of paths in it. With a scope, inspect, group, stage, and
+commit only within it, and leave everything outside it untouched. If the index
+holds staged changes outside it, stop and ask; never commit them in a scoped
+run. Without one, the scope is the whole working tree.
+
 ## Conventions
 
 Read `AGENTS.md` and `CLAUDE.md` first. Precedence: explicit repository
@@ -41,7 +50,8 @@ co-author trailers unless the repository requires them.
 
 ## 1. Inspect
 
-From the repository root:
+From the repository root (with a scope, run Git as `git -C <dir>` and limit
+the status and diff commands with `-- <paths>`):
 
 ```bash
 git status --short
@@ -176,6 +186,8 @@ Mention skipped or failed validation; do not narrate each Git command.
 
 Push after all commits are created and reported, asking first unless
 `--auto-push` or `--auto-all` applies. Check the current branch, its upstream,
-and the plausible remotes, and push only the branch with the new commits. Never
+and the plausible remotes, and push only the branch with the new commits. If
+the current branch has no upstream, publish it with
+`git push -u <remote> <current-branch>`; that is not creating a branch. Never
 `git push --all`, push tags, force-push, or silently pick an unusual remote when
 several are plausible; ask when no safe target is clear.
