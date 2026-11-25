@@ -17,7 +17,7 @@ dependency.
 
 ## ✨ Features
 
-Twenty skills, grouped by what they are for.
+Twenty-one skills, grouped by what they are for.
 
 ### 🔀 Git and GitHub
 
@@ -54,6 +54,12 @@ Twenty skills, grouped by what they are for.
 | [**source-research**](skills/source-research/SKILL.md) | `/source-research [--quick\|--deep] <question>` | Researches a question against authoritative external sources in an isolated agent. |
 | [**plan-implementation**](skills/plan-implementation/SKILL.md) | `/plan-implementation [--save] <change to plan>` | Produces a repository-grounded implementation plan without touching code. |
 | [**delegate-task**](skills/delegate-task/SKILL.md) | `/delegate-task [--interactive\|--autonomous] <task>` | Runs research, implementation and validation as isolated agents to keep the main context small. |
+
+### 🧰 Skill maintenance
+
+| Skill | Invocation | What it does |
+|---|---|---|
+| [**skill-feedback**](skills/skill-feedback/SKILL.md) | `/skill-feedback [--review]` | Logs signals that a skill should change or that a new skill should exist, and reviews them into approved skill changes. |
 
 ### 📚 Package references
 
