@@ -122,14 +122,23 @@ Apply only the configured changes, show the diff, and run the release
 validation (step 7) against that tree. If it fails, stop with no commit, push,
 or release. Otherwise show the exact changes and ask to commit and push them.
 
-On approval, run `commit --auto-all` scoped to the metadata changes, or follow
-`../commit/SKILL.md` inline as if invoked so when the harness cannot invoke
-skills. This approval covers the commit and its push, so `--auto-all` skips
+On approval, run `commit --auto-all` with `<dir>` and the metadata file paths
+as its scope, or follow `../commit/SKILL.md` inline as if invoked so when the
+harness cannot invoke skills. This approval covers the commit and its push, so `--auto-all` skips
 the duplicate confirmations, but `commit` still inspects, stages narrowly,
 validates, and preserves unrelated work. The commit excludes `.release-notes/`,
 unrelated changes, and anything beyond the configured metadata.
 
-Afterwards, fetch again and recapture `<target-sha>`.
+Afterwards, record the new commit as `<metadata-sha>`, fetch again, and
+confirm the push landed:
+
+```bash
+git -C <dir> merge-base --is-ancestor "<metadata-sha>" "origin/<default-branch>"
+```
+
+If it fails (for example, a protected default branch rejected the push), stop:
+create no release, and report that the metadata commit is local and unpushed.
+Otherwise recapture `<target-sha>`.
 
 ## 7. Release validation
 
