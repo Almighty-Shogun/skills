@@ -26,6 +26,19 @@ pull request for the current branch. If none resolves, or several plausibly
 could, ask; never guess. Follow the repository and PR resolution conventions of
 `review-pr`.
 
+Reading and verifying feedback may proceed read-only. Before any edit, read
+the head:
+
+```bash
+gh pr view <number> --repo <slug> \
+    --json headRefName,headRefOid,headRepository,headRepositoryOwner
+```
+
+Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
+`origin` is the head repository. A fork pull request passes only when `origin`
+is that fork, as when its author runs this. Otherwise stop and ask; never run
+`gh pr checkout` automatically.
+
 ## Collect and group feedback
 
 Collect unresolved review threads, actionable review comments, and PR-level
@@ -114,9 +127,18 @@ updates across the codebase. The following modifications were performed...
 ```
 
 Post exactly the approved text and never regenerate it afterwards unless the
-user asks for an edit. Resolving a thread is a separate approval: offer it once
-a request has been addressed or validly declined, validated where code changed,
-and replied to where appropriate. Never mark feedback resolved silently.
+user asks for an edit. A reply that claims a change ("Updated this...") waits
+until the change is committed and pushed through the `commit` skill and the
+PR's current `headRefOid` contains it. Re-read `headRefOid` with `gh pr view`,
+run `git -C <dir> fetch origin` so later pushes by others are present, then
+check with `git -C <dir> merge-base --is-ancestor <commit> <headRefOid>`; until
+it passes, say it is waiting on the push. Replies that claim no change, such as
+answers and declined requests, do not wait.
+
+Resolving a thread is a separate approval: offer it once a request has been
+addressed or validly declined, validated where code changed, and replied to
+where appropriate. A thread resolved by a change also waits until the PR's
+`headRefOid` contains it. Never mark feedback resolved silently.
 
 ## Final summary
 
@@ -126,6 +148,7 @@ Already addressed: 1
 Not applied: 1
 Replies posted: 3
 Threads resolved: 2
+Waiting on push: 1
 ```
 
 Also name any unresolved conflict, out-of-scope request awaiting a decision, or
