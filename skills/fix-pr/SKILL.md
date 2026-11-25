@@ -24,6 +24,19 @@ pull request for the current branch. If none resolves, or several plausibly
 could, ask for a number or URL; never guess. Follow the repository and PR
 resolution conventions of `review-pr`.
 
+Reading checks and diagnosis may proceed read-only. Before any edit, read the
+head:
+
+```bash
+gh pr view <number> --repo <slug> \
+    --json headRefName,headRefOid,headRepository,headRepositoryOwner
+```
+
+Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
+`origin` is the head repository. A fork pull request passes only when `origin`
+is that fork, as when its author runs this. Otherwise stop and ask; never run
+`gh pr checkout` automatically.
+
 ## Failing checks
 
 Read failed, timed-out, and meaningfully cancelled checks. Leave successful
