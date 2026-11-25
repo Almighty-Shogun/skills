@@ -32,9 +32,6 @@ Twenty-one skills, grouped by what they are for.
 | [**release**](skills/release/SKILL.md) | `/release [project] <major\|minor\|patch\|beta\|stable\|version>` | Cuts one GitHub release from a bump keyword or an explicit version, and lets CI publish. |
 | [**release-notes**](skills/release-notes/SKILL.md) | `/release-notes [project] [base-ref] [--file] [--redo <tag>]` | Generates evidence-based release notes from a diff, in the standard emoji house format. |
 
-> [!NOTE]
-> The `release` and `release-notes` skills are edited versions from [basmilius/skills](https://github.com/basmilius/skills) to better fit my own needs.
-
 ### 🔍 Code quality
 
 | Skill | Invocation | What it does |
@@ -44,7 +41,7 @@ Twenty-one skills, grouped by what they are for.
 | [**simplify-code**](skills/simplify-code/SKILL.md) | `/simplify-code [--scope <scope>] [--report]` | Simplifies existing code while preserving behavior. |
 | [**structure-review**](skills/structure-review/SKILL.md) | `/structure-review [--scope <scope>]` | Reviews a repository or scoped area for structural and architectural problems. |
 | [**api-design**](skills/api-design/SKILL.md) | `/api-design` | Designs public and cross-boundary API contracts without implementing them. |
-| [**csharp-docs**](skills/csharp-docs/SKILL.md) | `/csharp-docs [path ...] [--verify [--fix]]` | Writes or verifies C# XML documentation against an accuracy-first standard. |
+| [**csharp-docs**](skills/csharp-docs/SKILL.md) | `/csharp-docs [path ...] [--verify [--fix]]` | Writes or verifies C# XML documentation in a compact, accuracy-first style. |
 
 ### 🧭 Research and planning
 
