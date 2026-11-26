@@ -1,6 +1,12 @@
 ---
 name: api-design
-description: Design public and cross-boundary API contracts without implementing them. Covers HTTP/REST, GraphQL, public package interfaces, exported types, component contracts, and service/module boundaries. Produces a concise design artifact under .api-design/, prioritizes repository conventions and compatibility, and leaves implementation to another workflow.
+description: >-
+  Design public and cross-boundary API contracts without implementing them.
+  Covers HTTP/REST, GraphQL, public package interfaces, exported types,
+  component contracts, and service/module boundaries. Produces a concise design
+  artifact under .api-design/, prioritizes repository conventions and
+  compatibility, and leaves implementation to another workflow.
+argument-hint: "<contract to design>"
 ---
 
 # API Design
@@ -85,7 +91,8 @@ result or a conflict?`) and keep specifying the independent parts.
 Use authoritative evidence when framework, protocol, or specification behavior
 affects the design, through `source-research` for anything substantial. Use
 sub-agents only for genuinely independent boundaries, such as an HTTP contract
-alongside an SDK surface.
+alongside an SDK surface, each started with an explicit model and effort level
+that fits its task.
 
 ## Artifact
 
