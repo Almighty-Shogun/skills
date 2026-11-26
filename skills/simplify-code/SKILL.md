@@ -1,6 +1,11 @@
 ---
 name: simplify-code
-description: Simplify existing code while preserving behavior. Supports --scope and an analysis-only --report mode, uses isolated sub-agents for independent areas, respects historical intent and public contracts, validates changes independently, and never commits or pushes automatically. Use only when the user or repository instructions explicitly ask for it.
+description: >-
+  Simplify existing code while preserving behavior. Supports --scope and an
+  analysis-only --report mode, uses isolated sub-agents for independent areas,
+  respects historical intent and public contracts, validates changes
+  independently, and never commits or pushes automatically. Use only when the
+  user or repository instructions explicitly ask for it.
 argument-hint: "[--scope <scope>] [--report]"
 ---
 
@@ -18,9 +23,10 @@ simplify-code [--scope <scope>] [--report]
 ## Scope
 
 Use `--scope` or a clearly implied scope ("simplify the authentication code").
-Otherwise prefer the uncommitted diff, then the branch's changes against its
-base; if neither gives a meaningful target, ask. Never silently simplify the
-whole repository. Scope targets the changes, not the reading: inspect callers,
+Otherwise prefer the uncommitted changes (`git diff HEAD` plus the untracked
+files from `git status`), then the branch's changes against its base; if
+neither gives a meaningful target, ask. Never silently simplify the whole
+repository. Scope targets the changes, not the reading: inspect callers,
 dependencies, tests, and history outside it when they prove a change is safe.
 
 ## What counts
@@ -65,7 +71,11 @@ or remove them only when the simplification makes them obsolete.
 
 Give each independent area its own sub-agent, with related changes kept
 together, and pass only the relevant code, the callers and tests needed, the
-history that establishes intent, and repository constraints:
+history that establishes intent, and repository constraints. A single small
+area may be simplified directly, without a sub-agent; the validation below
+stays independent. Start each sub-agent with an explicit model and effort level
+that fits its task: highest for implementation, fixes, and validation, lower
+for simple read-only research. Each implementer hands off:
 
 ```text
 Area:
@@ -81,7 +91,9 @@ Then a fresh validation sub-agent checks the actual diff against the original
 behavior, the existing tests, the relevant build, lint, and typecheck commands,
 public contracts, side effects, exceptions, and performance-sensitive paths,
 without relying on the implementer's account. A concrete regression gets one
-targeted fix and another validation; avoid open-ended repair loops.
+targeted fix and another validation; avoid open-ended repair loops. If that
+validation still fails, revert only that area's own edits (never
+`git checkout` on the tree) and count the area as left unchanged.
 
 Changes stay in the working tree: no commits, pushes, branches, or history
 edits, and unrelated uncommitted work is protected. Committing goes through the
