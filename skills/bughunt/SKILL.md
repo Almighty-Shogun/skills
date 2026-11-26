@@ -206,9 +206,9 @@ would apply across several findings, ask once whether to create it.
 
 ## Final summary
 
-Counts per outcome and the count omitted by `--limit`, report paths or approved
-issue links, and a brief note of any known duplicate or concerning inconclusive
-candidate. Rejected and by-design candidates appear only as counts, except a
+Counts per outcome and, when `--limit` is given, the count it omitted, report
+paths or approved issue links, and a brief note of any known duplicate or
+concerning inconclusive candidate. Rejected and by-design candidates appear only as counts, except a
 by-design candidate with thin evidence of intent or a severe consequence, which
 gets one sentence. Do not repeat report bodies that already exist in files or
 issues.
