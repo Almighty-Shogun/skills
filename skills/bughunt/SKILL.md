@@ -1,6 +1,10 @@
 ---
 name: bughunt
-description: Proactively inspect a repository for genuine, reproducible bugs. Verify each credible candidate independently, then either write concise local bug reports or prepare GitHub issues for explicit user approval. Never fix bugs. Research fix options only with --solution, which requires --report and changes no code.
+description: >-
+  Proactively inspect a repository for genuine, reproducible bugs. Verify each
+  credible candidate independently, then either write concise local bug reports
+  or prepare GitHub issues for explicit user approval. Never fix bugs. Research
+  fix options only with --solution, which implies --report and changes no code.
 argument-hint: "[--report | --github] [--solution] [--scope <scope>] [--limit <n>]"
 ---
 
@@ -12,18 +16,19 @@ only the verified ones. Bughunt discovers and verifies. It never fixes.
 ## Invocation
 
 ```text
-bughunt --report | --github [--solution] [--scope <scope>] [--limit <n>]
+bughunt [--report | --github] [--solution] [--scope <scope>] [--limit <n>]
 ```
 
 - Scope may also be given in natural language ("focus on authentication").
   Without one, inspect the whole repository.
-- Neither `--report` nor `--github`: check whether the target is a Git
-  repository before analysing it. If it is not, use `--report`; otherwise ask
-  which mode. Both supplied: ask which one.
+- None of `--report`, `--github`, or `--solution`: check whether the target is
+  a Git repository before analysing it. If it is not, use `--report`; otherwise
+  ask which mode. Both `--report` and `--github` supplied: ask which one.
 - `--limit <n>` caps the number of **verified findings returned**, not the
-  number of candidates investigated.
+  number of candidates investigated. Verify every credible candidate, return the
+  `n` highest-severity findings, and report how many were omitted.
 - `--solution` adds a `## Fix options` section to each report file, so it
-  requires `--report`. Without `--report`, refuse and say why. It never grants
+  implies `--report`. With `--github`, refuse and say why. It never grants
   permission to change code.
 
 ## Candidates
@@ -47,9 +52,10 @@ candidate has not yet been shown to be unintended.
 ## Verification
 
 Give each credible, independent candidate its own verification sub-agent with
-only the context that candidate needs, and run them in parallel. The agent
-establishes two separate things: that the behavior happens, and that nobody
-intended it.
+only the context that candidate needs, and run them in parallel. Start each with
+an explicit model and effort level that fits its task: highest for verification,
+lower for simple read-only research. The agent establishes two separate things:
+that the behavior happens, and that nobody intended it.
 
 **Prove the behavior** with a repeatable failing test, a minimal reproduction, a
 deterministic command or request, or a code path that provably yields the wrong
@@ -146,8 +152,7 @@ preserve unrelated report content.
 
 Only with `--solution`. Write them after verification concludes, never inside a
 verification agent, so solution work cannot contaminate the verdict. Append
-`## Fix options` to each report, after the reproduction and severity line and
-before the file and line list:
+`## Fix options` at the end of each report:
 
 1. An opening line stating what is **not** at stake, so the reader knows the
    blast radius first.
@@ -201,7 +206,8 @@ would apply across several findings, ask once whether to create it.
 
 ## Final summary
 
-Counts per outcome (rejected and by-design candidates appear only as counts),
-report paths or approved issue links, and a brief note of
-any known duplicate or concerning inconclusive candidate. Do not repeat report
-bodies that already exist in files or issues.
+Counts per outcome, report paths or approved issue links, and a brief note of
+any known duplicate or concerning inconclusive candidate. Rejected and by-design
+candidates appear only as counts, except a by-design candidate with thin
+evidence of intent or a severe consequence, which gets one sentence. Do not
+repeat report bodies that already exist in files or issues.
