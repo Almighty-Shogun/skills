@@ -119,6 +119,17 @@ git -C <dir> switch "<default-branch>"
 git -C <dir> pull --ff-only origin "<default-branch>"
 ```
 
+If the pull fails (the branches diverged), stop and report it. Before editing
+metadata, this count must be 0:
+
+```bash
+git -C <dir> rev-list --count "origin/<default-branch>..<default-branch>"
+```
+
+Otherwise the local branch holds unpushed commits the metadata push would
+carry along, so stop and name them
+(`git -C <dir> log --oneline "origin/<default-branch>..<default-branch>"`).
+
 When this step ends, on success or stop, switch back with
 `git -C <dir> switch "<original-branch>"` (`switch --detach` for a commit)
 unless uncommitted metadata edits remain. User changes carried along that do
@@ -130,16 +141,16 @@ Apply only the configured changes, show the diff, and run the release
 validation (step 7) against that tree. If it fails, stop with no commit, push,
 or release. Otherwise show the exact changes and ask to commit and push them.
 
-On approval, run `commit --auto-all --dir <dir>` with the metadata file paths
-as its paths, or follow `../commit/SKILL.md` inline as if invoked so when the
-harness cannot invoke skills. This approval covers the commit and its push, so
-`--auto-all` skips the duplicate confirmations, but `commit` still inspects,
-stages narrowly, validates, and preserves unrelated work. The commit excludes
-`.release-notes/`, unrelated changes, and anything beyond the configured
-metadata.
+On approval, record `HEAD`, then run `commit --auto-all --dir <dir>` with the
+metadata file paths as its paths, or follow `../commit/SKILL.md` inline as if
+invoked so when the harness cannot invoke skills. This approval covers the
+commit and its push, so `--auto-all` skips the duplicate confirmations, but
+`commit` still inspects, stages narrowly, validates, and preserves unrelated
+work. The commit excludes `.release-notes/`, unrelated changes, and anything
+beyond the configured metadata.
 
-Record `HEAD` before the handoff. Afterwards, continue only when `HEAD` has
-moved and `git -C <dir> status --short -- <metadata paths>` is clean; otherwise
+Afterwards, continue only when `HEAD` has moved and
+`git -C <dir> status --short -- <metadata paths>` is clean; otherwise
 `commit` created nothing or left metadata behind, so stop with no release.
 Record the last commit `commit` created (`HEAD` after it returns, since it may
 split the metadata) as `<metadata-sha>`, fetch again, and confirm the push
@@ -184,7 +195,7 @@ Hand `release-notes` the repository, `<release-id>`, `<target-sha>`, the
 prerelease state, and the base; if the harness cannot invoke skills, follow
 `../release-notes/SKILL.md` inline. Resolve the base with its base rule (Range)
 for `<target-sha>` and this prerelease state, so a later `--redo` yields the
-same range. A base the user supplies wins.
+same range.
 
 ## 10. Release notes
 
@@ -231,9 +242,22 @@ gh release create "<release-id>" \
   <release-flag>
 ```
 
-`<release-flag>` is `--latest` for a stable release and `--prerelease` for a
-prerelease. Tag and title always equal `<release-id>`; `gh release create`
-creates the tag at the pinned SHA, so never push one manually.
+`<release-flag>` is `--prerelease` for a prerelease. For a stable release it is
+`--latest` only when `<release-id>` is higher than every existing stable
+release, compared by semver precedence with any leading `v` ignored; otherwise
+it is `--latest=false`:
+
+```bash
+gh release list --repo <slug> --exclude-pre-releases --exclude-drafts \
+  --limit 10000 --json tagName -q '.[].tagName'
+```
+
+When `<release-id>` or an existing stable tag does not parse as semver (for
+example monorepo `pkg@1.2.3` tags), ask whether this release should be Latest;
+never guess.
+
+Tag and title always equal `<release-id>`; `gh release create` creates the tag
+at the pinned SHA, so never push one manually.
 
 ## 14. Verify
 
