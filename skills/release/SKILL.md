@@ -73,9 +73,9 @@ such base tag, stop and ask for an explicit version.
 **`<bump> beta`** computes the stable target, then the next `<target>-beta.N`,
 starting at `<target>-beta.0`.
 
-**`stable`** finalizes an existing bare-semver beta line by stripping `-beta.N`. With
-several plausible lines, show them and ask; with none, ask for a bump or an
-explicit version.
+**`stable`** finalizes an existing bare-semver beta line by stripping
+`-beta.N`. With several plausible lines, show them and ask; with none, ask for
+a bump or an explicit version.
 
 A release is a prerelease when the part after an optional leading `v` carries a
 prerelease suffix. Respect instructions that forbid prereleases.
@@ -111,12 +111,18 @@ Only when instructions define pending release markers (such as replacing
 `Unreleased` or bumping a version file); never invent metadata edits.
 
 Prepare on the current remote release branch, never on a feature branch, and
-only when switching cannot disturb user work:
+only when switching cannot disturb user work. Record the current branch first
+as `<original-branch>` (the commit, when HEAD is detached):
 
 ```bash
 git -C <dir> switch "<default-branch>"
 git -C <dir> pull --ff-only origin "<default-branch>"
 ```
+
+When this step ends, on success or stop, switch back with
+`git -C <dir> switch "<original-branch>"` (`switch --detach` for a commit) if
+the tree is clean. If uncommitted metadata edits remain, stay on
+`<default-branch>` and report both branches; never carry the edits over.
 
 Apply only the configured changes, show the diff, and run the release
 validation (step 7) against that tree. If it fails, stop with no commit, push,
@@ -124,10 +130,11 @@ or release. Otherwise show the exact changes and ask to commit and push them.
 
 On approval, run `commit --auto-all` with `<dir>` and the metadata file paths
 as its scope, or follow `../commit/SKILL.md` inline as if invoked so when the
-harness cannot invoke skills. This approval covers the commit and its push, so `--auto-all` skips
-the duplicate confirmations, but `commit` still inspects, stages narrowly,
-validates, and preserves unrelated work. The commit excludes `.release-notes/`,
-unrelated changes, and anything beyond the configured metadata.
+harness cannot invoke skills. This approval covers the commit and its push, so
+`--auto-all` skips the duplicate confirmations, but `commit` still inspects,
+stages narrowly, validates, and preserves unrelated work. The commit excludes
+`.release-notes/`, unrelated changes, and anything beyond the configured
+metadata.
 
 Afterwards, record the new commit as `<metadata-sha>`, fetch again, and
 confirm the push landed:
@@ -169,17 +176,15 @@ runs, so the final release SHA itself is proven.
 
 Hand `release-notes` the repository, `<release-id>`, `<target-sha>`, the
 prerelease state, and the base; if the harness cannot invoke skills, follow
-`../release-notes/SKILL.md` inline. A stable release's base is the latest
-published non-prerelease release before the target; a prerelease's is the most
-recent published release of any kind, so successive betas describe changes
-since the previous beta. With no prior release, use the first commit. A base the
-user supplies wins.
+`../release-notes/SKILL.md` inline. Resolve the base with its base rule (Range)
+for `<target-sha>` and this prerelease state, so a later `--redo` yields the
+same range. A base the user supplies wins.
 
 ## 10. Release notes
 
 Generate the notes through `release-notes` in its house format, monorepo
 package sections included, and write the exact release body to
-`<dir>/.release-notes/<safe-release-id>.md` (for example
+`<dir>/.release-notes/<release-id>.md` (for example
 `.release-notes/v1.4.0.md`). Create it only **after** any metadata commit so it
 cannot end up in that commit. It stays for inspection and is never committed
 automatically; if Git does not ignore it, warn that it shows in the working
@@ -216,7 +221,7 @@ gh release create "<release-id>" \
   --repo <slug> \
   --target "<target-sha>" \
   --title "<release-id>" \
-  --notes-file "<dir>/.release-notes/<safe-release-id>.md" \
+  --notes-file "<dir>/.release-notes/<release-id>.md" \
   <release-flag>
 ```
 
