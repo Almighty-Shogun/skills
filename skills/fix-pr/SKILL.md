@@ -1,6 +1,11 @@
 ---
 name: fix-pr
-description: Diagnose and fix GitHub Actions failures on a pull request. Resolve the PR, group failing checks by root cause, verify each failure, show a concise diagnosis and proposed fix for user approval, apply approved local changes through isolated sub-agents, validate independently, and never commit or push automatically.
+description: >-
+  Diagnose and fix GitHub Actions failures on a pull request. Resolve the PR,
+  group failing checks by root cause, verify each failure, show a concise
+  diagnosis and proposed fix for user approval, apply approved local changes
+  through isolated sub-agents, validate independently, and never commit or push
+  automatically.
 argument-hint: "[<number-or-url>]"
 ---
 
@@ -14,8 +19,9 @@ belongs to `review-pr`, reviewer feedback to `respond-pr`, and merging to
 
 Approved fixes change the working tree only. Commits and pushes go through the
 `commit` skill when the user wants them; this skill never commits, pushes,
-amends, rebases, or creates or deletes branches. Stay within the approved failure scope,
-follow repository conventions, and protect unrelated uncommitted work.
+amends, rebases, or creates or deletes branches. Stay within the approved
+failure scope, follow repository conventions, and protect unrelated uncommitted
+work.
 
 ## Resolve the PR
 
@@ -42,6 +48,16 @@ is that fork, as when its author runs this. Otherwise stop and ask; never run
 Read failed, timed-out, and meaningfully cancelled checks. Leave successful
 output out of context unless comparing against it isolates a failure.
 
+```bash
+gh pr checks <number> --repo <slug> --json name,state,bucket,workflow,link
+gh run view <run-id> --repo <slug> --log-failed
+```
+
+With `--json`, `gh pr checks` exits 0 whatever the check states, so read
+`bucket` (`fail`, `pending`, `cancel`); exit 1 means no checks were reported
+or the command failed. Take `<run-id>` from the `link` field
+(`.../actions/runs/<run-id>/job/...`).
+
 GitHub Actions only. For an external provider (Buildkite, CircleCI, Jenkins,
 and the like), report the check, its status, and its link, and never infer a
 cause from logs you cannot read.
@@ -61,6 +77,10 @@ test, build, typecheck, lint, or workspace command. When runner-only behavior,
 platform differences, secrets, or hosted services make that impossible, work
 from the CI evidence and say so. A red workflow alone does not establish a
 cause.
+
+Start each sub-agent in this skill with an explicit model and effort level that
+fits its task: highest for implementation, fix, and validation, lower for
+simple read-only diagnosis.
 
 ```text
 Check(s): <affected checks>
@@ -112,7 +132,8 @@ required coverage is not reduced.
 
 Assign each approved root cause to an isolated implementation sub-agent with
 the approved diagnosis, the failing checks, the fix direction, and the relevant
-code. It returns:
+code. The sub-agents share the working tree, so run them one after another
+unless their file sets are disjoint. Each returns:
 
 ```text
 Status: Applied | Not applied
