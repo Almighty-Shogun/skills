@@ -5,7 +5,9 @@
 ---
 
 # Skills
-A curated collection of practical AI coding-agent skills for research, implementation, review, Git workflows, releases, documentation, and repository maintenance.
+A curated collection of practical AI coding-agent skills for research,
+implementation, review, Git workflows, releases, documentation, and repository
+maintenance.
 
 A skill is a folder with a `SKILL.md` inside it: frontmatter naming the skill,
 then the instructions an agent follows when the skill is invoked. Larger skills
@@ -24,12 +26,12 @@ Twenty-one skills, grouped by what they are for.
 | Skill | Invocation | What it does |
 |---|---|---|
 | [**commit**](skills/commit/SKILL.md) | `/commit [--auto-commit] [--auto-push] [--auto-all] [<dir> [<path>...]]` | Turns a mixed working tree into small commits grouped by intent, proposes the plan, stages narrowly, never amends or force-pushes. |
-| [**create-pr**](skills/create-pr/SKILL.md) | `/create-pr [fix\|feat\|improvement\|chore\|docs/<slug>]` | Opens a pull request on a new or existing work branch, inferring the branch name from the actual change. |
+| [**create-pr**](skills/create-pr/SKILL.md) | `/create-pr [<fix\|feat\|improvement\|chore\|docs>/<slug>]` | Opens a pull request on a new or existing work branch, inferring the branch name from the actual change. |
 | [**review-pr**](skills/review-pr/SKILL.md) | `/review-pr [<number-or-url>] [--comment] [--no-build]` | Reviews a pull request for bugs and drift from the repository's own instructions, and reports findings without changing anything. |
 | [**respond-pr**](skills/respond-pr/SKILL.md) | `/respond-pr [<number-or-url>]` | Surfaces unresolved reviewer feedback, lets you choose what to address, and answers it. |
 | [**fix-pr**](skills/fix-pr/SKILL.md) | `/fix-pr [<number-or-url>]` | Diagnoses failing GitHub Actions checks, groups them by root cause, and fixes them. |
 | [**merge-pr**](skills/merge-pr/SKILL.md) | `/merge-pr [<number-or-url>] [--no-review] [--comment] [--auto-merge]` | Merges one pull request after checking state, CI and review, then cleans up the branch. |
-| [**release**](skills/release/SKILL.md) | `/release [project] <major\|minor\|patch\|beta\|stable\|version>` | Cuts one GitHub release from a bump keyword or an explicit version, and lets CI publish. |
+| [**release**](skills/release/SKILL.md) | `/release [project] <major\|minor\|patch [beta]\|stable\|version>` | Cuts one GitHub release from a bump keyword or an explicit version, and lets CI publish. |
 | [**release-notes**](skills/release-notes/SKILL.md) | `/release-notes [project] [base-ref] [--file] [--redo <tag>]` | Generates evidence-based release notes from a diff, in the standard emoji house format. |
 
 ### 🔍 Code quality
@@ -40,7 +42,7 @@ Twenty-one skills, grouped by what they are for.
 | [**code-validation**](skills/code-validation/SKILL.md) | `/code-validation` | Reviews the current changes against requirements and repository behavior in an isolated agent. |
 | [**simplify-code**](skills/simplify-code/SKILL.md) | `/simplify-code [--scope <scope>] [--report]` | Simplifies existing code while preserving behavior. |
 | [**structure-review**](skills/structure-review/SKILL.md) | `/structure-review [--scope <scope>]` | Reviews a repository or scoped area for structural and architectural problems. |
-| [**api-design**](skills/api-design/SKILL.md) | `/api-design` | Designs public and cross-boundary API contracts without implementing them. |
+| [**api-design**](skills/api-design/SKILL.md) | `/api-design <contract to design>` | Designs public and cross-boundary API contracts without implementing them. |
 | [**csharp-docs**](skills/csharp-docs/SKILL.md) | `/csharp-docs [path ...] [--verify [--fix]]` | Writes or verifies C# XML documentation in a compact, accuracy-first style. |
 
 ### 🧭 Research and planning
@@ -48,7 +50,7 @@ Twenty-one skills, grouped by what they are for.
 | Skill | Invocation | What it does |
 |---|---|---|
 | [**repository-research**](skills/repository-research/SKILL.md) | `/repository-research [--save] [scope or question]` | Investigates how a repository behaves without modifying it, separating confirmed facts from inference. |
-| [**source-research**](skills/source-research/SKILL.md) | `/source-research [--quick\|--deep] <question>` | Researches a question against authoritative external sources in an isolated agent. |
+| [**source-research**](skills/source-research/SKILL.md) | `/source-research [--quick\|--deep] <research question>` | Researches a question against authoritative external sources in an isolated agent. |
 | [**plan-implementation**](skills/plan-implementation/SKILL.md) | `/plan-implementation [--save] <change to plan>` | Produces a repository-grounded implementation plan without touching code. |
 | [**delegate-task**](skills/delegate-task/SKILL.md) | `/delegate-task [--interactive\|--autonomous] <task>` | Runs research, implementation and validation as isolated agents to keep the main context small. |
 
@@ -102,8 +104,8 @@ Install one skill, or a few:
 npx skills add Almighty-Shogun/skills --skill commit --skill shogun-nuget
 ```
 
-Pick the agent and the scope. Without `-g` the skills land in the current project
-rather than your home directory:
+Pick the agent and the scope. Without `-g` the skills land in the current
+project rather than your home directory:
 
 ```sh
 npx skills add Almighty-Shogun/skills --skill '*' -a claude-code -g
@@ -163,8 +165,8 @@ Check what is left with `npx skills list`.
 
 ## 🔧 Adding a skill
 
-Create a folder under `skills/` whose name matches the `name` in the frontmatter,
-since the agent resolves one by the other:
+Create a folder under `skills/` whose name matches the `name` in the
+frontmatter, since the agent resolves one by the other:
 
 ```text
 skills/<name>/
@@ -194,6 +196,12 @@ Put anything long in `references/` and tell the skill when to read it. A skill
 that loads five files for a one-line question is a skill that costs more than it
 saves.
 
+Prose wraps at 80 columns; tables, code blocks, URLs, and frontmatter values
+other than `description` (such as `argument-hint` and `license`) are exempt.
+Write the `description` in the `>-` folded style shown above. Emojis belong in
+this README, and in a skill only as part of an output format it produces (such
+as the `release-notes` headings).
+
 Install a skill from a local clone to try it before pushing:
 
 ```sh
@@ -202,12 +210,12 @@ npx skills add ./skills --skill my-skill -a claude-code -g
 
 ## 📝 Notes
 
-- **Nothing here is built or compiled.** A change is live the moment it is saved,
-  as long as the skill is symlinked rather than copied.
+- **Nothing here is built or compiled.** A change is live the moment it is
+  saved, as long as the skill is symlinked rather than copied.
 - **Skills are agent neutral.** They describe intent and shell commands rather
   than harness APIs, so the same file works in Claude Code and Codex.
-- **Repository instructions win.** Every skill defers to the `AGENTS.md` or
-  `CLAUDE.md` of the repository it runs in.
+- **Repository instructions win.** The agent loads the `AGENTS.md` or
+  `CLAUDE.md` of the repository it runs in, and the skills defer to them.
 - **The workflow skills are deliberately narrow.** They stage, commit, review,
   merge and release, and refuse to amend, rebase, force-push or publish on their
   own initiative.
@@ -225,8 +233,8 @@ A skill installed without `-g` lives in the current project, so it is invisible
 from anywhere else. Then start a new session, since skills are listed at session
 start.
 
-**A skill behaves like an older version.** It was installed as a copy rather than
-a symlink, so this repository and the installed copy have drifted:
+**A skill behaves like an older version.** It was installed as a copy rather
+than a symlink, so this repository and the installed copy have drifted:
 
 ```sh
 npx skills update -g
