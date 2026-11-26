@@ -216,8 +216,8 @@ git -C <dir> push origin --delete refs/heads/<head-branch>
 
 ## 11. Local cleanup
 
-Only after the remote merge succeeded, and only when switching cannot collide
-with local work:
+Run these only after the remote merge succeeded and only when switching cannot
+collide with local work, each per the rules below it:
 
 ```bash
 git -C <dir> switch <base-branch>
