@@ -25,7 +25,7 @@ work.
 
 ## Resolve the PR
 
-Use the PR URL when given, else the number in the current repository, else the
+Use the PR URL when given, else the number, resolved per `review-pr`, else the
 pull request for the current branch. If none resolves, or several plausibly
 could, ask for a number or URL; never guess. Follow the repository and PR
 resolution conventions of `review-pr`.
@@ -39,10 +39,12 @@ gh pr view <number> --repo <slug> \
 ```
 
 Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
-`origin` is the head repository. A fork pull request passes only when `origin`
-is that fork, as when its author runs this. Otherwise diagnose from CI evidence
-or `gh pr diff` without local runs, and stop and ask before any edit; never run
-`gh pr checkout` automatically.
+`<origin-slug>` is the head repository (`headRepositoryOwner.login` and
+`headRepository.name`). A fork pull request passes only when `origin` is that
+fork, as when its author runs this; `<slug>` is then the fork's parent, per
+`review-pr`. Otherwise diagnose from CI evidence or `gh pr diff` without local
+runs, and stop and ask before any edit; never run `gh pr checkout`
+automatically.
 
 ## Failing checks
 
