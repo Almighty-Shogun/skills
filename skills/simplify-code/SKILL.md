@@ -116,7 +116,7 @@ unique descriptive name.
 
 ```text
 Simplifications applied: 3
-Areas left unchanged due to uncertainty: 1
+Areas left unchanged: 1
 Validation: passed
 ```
 
