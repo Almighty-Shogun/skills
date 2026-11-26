@@ -124,11 +124,12 @@ belongs to `respond-pr`.
 ## 5. Fresh review
 
 Unless `--no-review` was given, run `review-pr` against this pull request and
-its actual base, forwarding `--comment` only when supplied. If the harness
-cannot invoke one skill from another, read `../review-pr/SKILL.md` and follow
-it inline. Proceed only when it reports **no blocking findings**; otherwise
-stop and report them. With `--no-review`, show `review: skipped by --no-review`
-so an unreviewed merge never looks reviewed.
+its actual base, passing its URL rather than a bare number so `review-pr`
+resolves the same repository, and forwarding `--comment` only when supplied. If
+the harness cannot invoke one skill from another, read `../review-pr/SKILL.md`
+and follow it inline. Proceed only when it reports **no blocking findings**;
+otherwise stop and report them. With `--no-review`, show
+`review: skipped by --no-review` so an unreviewed merge never looks reviewed.
 
 ## 6. Base relationship
 
