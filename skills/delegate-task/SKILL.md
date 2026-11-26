@@ -1,6 +1,9 @@
 ---
 name: delegate-task
-description: Token-efficient development workflow using isolated research, implementation, and validation agents. Supports --interactive and --autonomous; otherwise infers the mode from context.
+description: >-
+  Token-efficient development workflow using isolated research, implementation,
+  and validation agents. Supports --interactive and --autonomous; otherwise
+  infers the mode from context.
 argument-hint: "[--interactive | --autonomous] <task>"
 ---
 
@@ -15,7 +18,9 @@ that is needed. Carry conclusions forward, never transcripts.
 ## Modes
 
 - `--interactive`: research, show the plan, wait for approval, then implement
-  and validate.
+  and validate. When research is skipped, a user-supplied plan or approved
+  artifact counts as approval; otherwise show the Task Contract plus the
+  intended files and wait.
 - `--autonomous`: research, implement, and validate without pausing, unless a
   material decision needs the user.
 - No flag: choose interactive when requirements are materially ambiguous,
@@ -45,16 +50,18 @@ text the next phase can act on without re-reading what the previous phase
 read.
 
 Start each phase agent with an explicit model and effort level that fits the
-phase: highest for implementation and validation, lower for simple read-only
-research.
+phase: highest for implementation, fix, and validation, lower for simple
+read-only research.
 
 ## Workflow boundary
 
 This skill is for implementing a change. Proactive bug discovery is `bughunt`,
-structural review is `structure-review`, contract design is `api-design`, and
-substantial external research is `source-research`. When the user asks to
-implement an artifact from one of those, treat it as input: confirm it still
-applies, then do not repeat its analysis.
+structural review is `structure-review`, contract design is `api-design`,
+substantial external research is `source-research`, investigating current
+behavior is `repository-research`, and planning is `plan-implementation`
+(`.plan-implementation/`). When the user asks to implement an artifact from one
+of those, treat it as input: confirm it still applies, then do not repeat its
+analysis. A saved plan lets research be skipped, but still needs confirming.
 
 ## Research
 
