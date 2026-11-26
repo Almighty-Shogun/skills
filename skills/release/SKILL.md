@@ -120,9 +120,11 @@ git -C <dir> pull --ff-only origin "<default-branch>"
 ```
 
 When this step ends, on success or stop, switch back with
-`git -C <dir> switch "<original-branch>"` (`switch --detach` for a commit) if
-the tree is clean. If uncommitted metadata edits remain, stay on
-`<default-branch>` and report both branches; never carry the edits over.
+`git -C <dir> switch "<original-branch>"` (`switch --detach` for a commit)
+unless uncommitted metadata edits remain. User changes carried along that do
+not collide do not block the switch back. If metadata edits remain uncommitted,
+or Git refuses the switch, stay on `<default-branch>` and report both branches;
+never carry the edits over.
 
 Apply only the configured changes, show the diff, and run the release
 validation (step 7) against that tree. If it fails, stop with no commit, push,
@@ -136,8 +138,9 @@ stages narrowly, validates, and preserves unrelated work. The commit excludes
 `.release-notes/`, unrelated changes, and anything beyond the configured
 metadata.
 
-Afterwards, record the new commit as `<metadata-sha>`, fetch again, and
-confirm the push landed:
+Afterwards, record the last commit `commit` created (`HEAD` after it returns,
+since it may split the metadata) as `<metadata-sha>`, fetch again, and confirm
+the push landed:
 
 ```bash
 git -C <dir> merge-base --is-ancestor "<metadata-sha>" "origin/<default-branch>"
