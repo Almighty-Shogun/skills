@@ -58,8 +58,9 @@ target only; ask only when a run with no argument finds an undocumented project.
 Take `<author>` and `<since>` values from the project's existing tags or from
 user-level or repository-level instructions; never invent an author. With no
 value from any of these, leave the tag out. Where the project already uses
-`<since>`, a new member gets `<since>Unreleased</since>`. `<since>` records
-when a member was added; changing its signature or body leaves it alone.
+`<since>`, a new member gets `<since>Unreleased</since>` unless the instructions
+name a value. `<since>` records when a member was added; changing its signature
+or body leaves it alone.
 
 ## Verify before writing
 
@@ -227,7 +228,7 @@ and every other tag type its own.
 /// This method saves changes but does not start its own transaction.
 /// </remarks>
 ///
-/// <author>Almighty-Shogun</author>
+/// <author>Author Name</author>
 /// <since>4.0.0</since>
 ```
 
