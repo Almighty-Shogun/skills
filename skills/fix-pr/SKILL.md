@@ -80,8 +80,8 @@ secrets, or hosted services make that impossible, work from the CI evidence and
 say so. A red workflow alone does not establish a cause.
 
 Start each sub-agent in this skill with an explicit model and the highest
-effort level: diagnosis reproduces failures and decides the cause, so it counts
-as validation work, like implementation, fix, and validation.
+effort level: diagnosis reproduces failures and decides the cause, so it gets
+the highest effort, like implementation, fix, and validation.
 
 ```text
 Check(s): <affected checks>
