@@ -125,7 +125,8 @@ essays, attribution, or commentary on the design being clean or minimal.
 
 ## Boundaries
 
-The only persistent change is the `.api-design/` file. Leave source, tests,
+The only persistent changes are the `.api-design/` file and any
+`.research/<topic>.md` that `source-research` writes. Leave source, tests,
 configuration, and Git state alone, and protect unrelated uncommitted work.
 
 ## Final summary
