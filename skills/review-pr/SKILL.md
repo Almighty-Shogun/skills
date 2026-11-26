@@ -4,8 +4,9 @@ description: >-
   Review a GitHub pull request for bugs, mistakes, inconsistencies, and drift
   from the repository's own instructions, and report findings without changing
   anything. Use when asked to review, check, audit, inspect, or sanity check a
-  PR, asked whether a PR has blocking findings, or given a PR number or URL. Never edits code, merges, or approves; posts a comment only
-  with --comment and approval. CI diagnosis and fixing belongs to fix-pr.
+  PR, asked whether a PR has blocking findings, or given a PR number or URL.
+  Never edits code, merges, or approves; posts a comment only with --comment
+  and approval. CI diagnosis and fixing belongs to fix-pr.
 argument-hint: "[<number-or-url>] [--comment] [--no-build]"
 ---
 
@@ -51,8 +52,9 @@ format stable.
 ## 1. Resolve the repository
 
 Use the current Git repository. Outside one, inspect child directories with an
-`origin` remote and ask which to use. Derive `<dir>` (root), `<slug>` (`owner/name`
-from `origin`), `<repo-name>`, and `<default-branch>` (falling back to `main`).
+`origin` remote and ask which to use. Derive `<dir>` (root), `<slug>`
+(`owner/name` from `origin`), `<repo-name>`, and `<default-branch>` (falling
+back to `main`).
 
 Run every git command as `git -C <dir> ...` and every `gh pr` command with
 `--repo <slug>`; `gh repo view` takes the repository positionally and rejects
@@ -99,6 +101,9 @@ findings can no longer gate anything.
 ```bash
 gh pr checks <number> --repo <slug>
 ```
+
+It exits 1 when a check failed or none were reported, and 8 when one is
+pending; that non-zero exit is data, not a command error, so read the output.
 
 | Rollup | Meaning | Effect |
 |---|---|---|
