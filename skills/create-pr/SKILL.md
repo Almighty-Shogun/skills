@@ -105,9 +105,9 @@ If it looks based on another feature branch or carries unrelated history,
 report it and ask; never rebase or merge automatically.
 
 Once the branch is known, check for an open pull request with
-`gh pr view "<branch>" --repo <slug> --json number,url,state,title`. If one
-exists, report it and stop; updating it belongs to `respond-pr`, `fix-pr`, or
-the development workflow.
+`gh pr view "<branch>" --repo <slug> --json number,url,state,title`. If its
+`state` is `OPEN`, report it and stop; updating it belongs to `respond-pr`,
+`fix-pr`, or the development workflow. A merged or closed one does not block.
 
 ```bash
 git -C <dir> rev-parse --verify "<branch>"
@@ -163,10 +163,12 @@ git -C <dir> log --oneline origin/<default-branch>..HEAD
 git -C <dir> diff --stat origin/<default-branch>...HEAD
 ```
 
-Continue only once the commit skill has finished and `origin/<branch>` matches
-the local `HEAD`. If the user declined the push, stop: the pull request cannot
-be opened from an unpushed branch. With no commits ahead of the base, stop:
-there is nothing to open.
+When nothing is left to commit but the branch has unpushed commits, `commit`
+still offers the push, lists those commits, and always asks for it. Continue
+only once the commit skill has finished and `origin/<branch>` matches the local
+`HEAD`. If the user declined the push, stop: the pull request cannot be opened
+from an unpushed branch. With no commits ahead of the base, stop: there is
+nothing to open.
 
 ## 5. Write the title and body
 
@@ -197,9 +199,9 @@ Revise and show it again when edits are requested.
 
 ## 6. Create the PR
 
-After approval, re-check that no pull request appeared meanwhile
-(`gh pr view "<branch>" --repo <slug> --json url -q .url`); if one did, report
-it and stop. Otherwise:
+After approval, re-check that no open pull request appeared meanwhile
+(`gh pr view "<branch>" --repo <slug> --json url,state`); if its `state` is
+`OPEN`, report it and stop. Otherwise:
 
 ```bash
 gh pr create --repo <slug> --base "<default-branch>" --head "<branch>" \
