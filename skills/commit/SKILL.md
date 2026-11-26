@@ -63,6 +63,10 @@ git diff --stat
 git diff --cached --stat
 ```
 
+With a scope, also run `git diff --cached --name-only` without the path filter,
+so staged changes outside the scope are seen (see Invocation). When nothing in
+the scope is left to commit, go to step 8.
+
 Read the relevant diffs and every untracked file before grouping; never infer
 intent from filenames. Do not commit secrets, `.env` values, keys, logs, caches,
 build output, large generated artifacts, archives, or binaries unless they are
@@ -170,7 +174,9 @@ For each group in turn:
    leave later groups uncommitted, never push the partial set, report it, and
    change code only when the user asked this workflow to fix it. Report checks
    that were skipped or impractical.
-3. `git commit -m "<message>"`, then `git status --short`.
+3. Run `git diff --cached --name-only` without a path filter; if it lists a
+   file outside the group, stop and ask. Then `git commit -m "<message>"` and
+   `git status --short`.
 
 If the working tree changes unexpectedly mid-workflow, stop and re-inspect.
 
@@ -199,3 +205,9 @@ the current branch has no upstream, publish it with
 `git push -u <remote> <current-branch>`; that is not creating a branch. Never
 `git push --all`, push tags, force-push, or silently pick an unusual remote when
 several are plausible; ask when no safe target is clear.
+
+When there was nothing to commit but the current branch is ahead of its
+upstream (`git log --oneline @{u}..HEAD`), or has no upstream and holds commits
+on no remote (`git log --oneline HEAD --not --remotes`), offer to push it. List
+those commits as ones this run did not create, and always ask: `--auto-push`
+and `--auto-all` never cover this push.
