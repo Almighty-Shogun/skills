@@ -1,6 +1,10 @@
 ---
 name: code-validation
-description: Token-efficient independent code review using an isolated validation agent. Validates current changes against requirements and repository behavior without rewriting correct code. Use only when the user or repository instructions explicitly ask for it.
+description: >-
+  Token-efficient independent code review using an isolated validation agent.
+  Validates current changes against requirements and repository behavior without
+  rewriting correct code. Use only when the user or repository instructions
+  explicitly ask for it.
 ---
 
 # Code Validation
@@ -19,14 +23,16 @@ and the diff rather than an implementation summary. Give it a Task Contract
 request, tests, issue context, or an approved plan), repository access, the
 current diff and status, the relevant tests, and any `AGENTS.md` or `CLAUDE.md`.
 Leave out implementation reasoning and self-assessment unless a needed fact
-cannot be recovered from the repository.
+cannot be recovered from the repository. Start each agent with an explicit model
+and effort level that fits its task: highest for validation and fixes, lower for
+simple read-only research.
 
 ## Scope
 
-Default to the working-tree diff. Without one, validate the files, commit,
-branch comparison, or behavior the user names. Read beyond the diff only as far
-as dependencies, contracts, tests, and regressions require; no broad audit
-unless asked.
+Default to the working-tree changes: `git diff HEAD` plus the untracked files
+from `git status`. Without any, validate the files, commit, branch comparison,
+or behavior the user names. Read beyond the diff only as far as dependencies,
+contracts, tests, and regressions require; no broad audit unless asked.
 
 ## What it checks
 
@@ -73,4 +79,5 @@ exist.
 
 When the user asks for fixes, use a fresh implementation agent with only the
 Task Contract, the findings, and repository access, then run a fresh validation
-rather than letting the fixer approve its own work.
+rather than letting the fixer approve its own work. Run one fix round only, then
+report any remaining findings to the user.
