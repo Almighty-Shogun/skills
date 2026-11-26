@@ -30,8 +30,8 @@ pull request for the current branch. If none resolves, or several plausibly
 could, ask for a number or URL; never guess. Follow the repository and PR
 resolution conventions of `review-pr`.
 
-Reading checks and diagnosis may proceed read-only. Before any edit, read the
-head:
+Reading checks and CI logs may proceed read-only. Before any local
+reproduction or edit, read the head:
 
 ```bash
 gh pr view <number> --repo <slug> \
@@ -40,7 +40,8 @@ gh pr view <number> --repo <slug> \
 
 Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
 `origin` is the head repository. A fork pull request passes only when `origin`
-is that fork, as when its author runs this. Otherwise stop and ask; never run
+is that fork, as when its author runs this. Otherwise diagnose from CI evidence
+or `gh pr diff` without local runs, and stop and ask before any edit; never run
 `gh pr checkout` automatically.
 
 ## Failing checks
@@ -72,15 +73,15 @@ code to compensate for an infrastructure failure.
 
 Give each independent root cause its own diagnosis sub-agent, with only its
 failing checks, the decisive log excerpt, the relevant repository context, and
-the commands to reproduce. Reproduce locally where practical, using the same
-test, build, typecheck, lint, or workspace command. When runner-only behavior,
-platform differences, secrets, or hosted services make that impossible, work
-from the CI evidence and say so. A red workflow alone does not establish a
-cause.
+the commands to reproduce. When the head check passed, reproduce locally where
+practical, using the same test, build, typecheck, lint, or workspace command.
+When the head check failed, or runner-only behavior, platform differences,
+secrets, or hosted services make that impossible, work from the CI evidence and
+say so. A red workflow alone does not establish a cause.
 
-Start each sub-agent in this skill with an explicit model and effort level that
-fits its task: highest for implementation, fix, and validation, lower for
-simple read-only diagnosis.
+Start each sub-agent in this skill with an explicit model and the highest
+effort level: diagnosis reproduces failures and decides the cause, so it counts
+as validation work, like implementation, fix, and validation.
 
 ```text
 Check(s): <affected checks>
