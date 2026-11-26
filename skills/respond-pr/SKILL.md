@@ -26,7 +26,7 @@ Protect unrelated uncommitted work.
 
 ## Resolve the PR
 
-Use the PR URL when given, else the number in the current repository, else the
+Use the PR URL when given, else the number, resolved per `review-pr`, else the
 pull request for the current branch. If none resolves, or several plausibly
 could, ask; never guess. Follow the repository and PR resolution conventions of
 `review-pr`.
@@ -40,11 +40,13 @@ gh pr view <number> --repo <slug> \
 ```
 
 Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
-`origin` is the head repository. A fork pull request passes only when `origin`
-is that fork, as when its author runs this. Otherwise stop and ask before any
-edit; never run `gh pr checkout` automatically. Reading and verifying feedback
-may still proceed read-only, but from CI evidence and `gh pr diff`, never from
-local runs on a checkout that is not the PR head.
+`<origin-slug>` is the head repository (`headRepositoryOwner.login` and
+`headRepository.name`). A fork pull request passes only when `origin` is that
+fork, as when its author runs this; `<slug>` is then the fork's parent, per
+`review-pr`. Otherwise stop and ask before any edit; never run `gh pr checkout`
+automatically. Reading and verifying feedback may still proceed read-only, but
+from CI evidence and `gh pr diff`, never from local runs on a checkout that is
+not the PR head.
 
 ## Collect and group feedback
 
@@ -161,11 +163,11 @@ user asks for an edit. Replies that claim no change, such as answers and
 declined requests, do not wait. A reply that claims a change ("Updated
 this...") waits until the change is pushed and the PR head contains it:
 
-1. Record `HEAD`, then offer the `commit` handoff with the changed files as its
-   paths; it owns grouping, commits, and the push under its own confirmations.
-   Continue only when `HEAD` has moved and `git -C <dir> status --short --
-   <paths>` is clean; otherwise nothing was committed, so handle it as in
-   step 3.
+1. Record `HEAD`, then offer the `commit` handoff with `--dir <dir>` and the
+   changed files as its paths; it owns grouping, commits, and the push under
+   its own confirmations. Continue only when `HEAD` has moved and
+   `git -C <dir> status --short -- <paths>` is clean; otherwise nothing was
+   committed, so handle it as in step 3.
 2. Re-read `headRefOid` with `gh pr view`, run `git -C <dir> fetch origin` so
    later pushes by others are present, then check
    `git -C <dir> merge-base --is-ancestor HEAD <headRefOid>`. `HEAD` is the
