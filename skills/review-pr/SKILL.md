@@ -31,7 +31,8 @@ review-pr [<number> | <PR URL>] [--comment] [--no-build]
 
 - No PR: review the current branch's pull request; if it has none, list the
   open ones and ask.
-- A number: that pull request in the current repository.
+- A number: that pull request in the current repository, or in its parent
+  when `origin` is a fork.
 - A URL: that exact pull request, with the repository resolved from the URL.
 - `--comment` offers to post the findings as a comment.
 - `--no-build` skips the local build in step 5.
@@ -52,9 +53,15 @@ format stable.
 ## 1. Resolve the repository
 
 Use the current Git repository. Outside one, inspect child directories with an
-`origin` remote and ask which to use. Derive `<dir>` (root), `<slug>`
+`origin` remote and ask which to use. Derive `<dir>` (root), `<origin-slug>`
 (`owner/name` from `origin`), `<repo-name>`, and `<default-branch>` (falling
 back to `main`).
+
+`<slug>` is the repository the pull request lives in. With a URL, it is the
+URL's `owner/name` (`https://github.com/<owner>/<name>/pull/<number>`).
+Otherwise run `gh repo view <origin-slug> --json isFork,parent`: when `origin`
+is a fork, a number or branch resolves in the fork's parent, not the fork, so
+`<slug>` is the parent's `owner/name`; else `<slug>` is `<origin-slug>`.
 
 Run every git command as `git -C <dir> ...` and every `gh pr` command with
 `--repo <slug>`; `gh repo view` takes the repository positionally and rejects
@@ -79,6 +86,10 @@ gh pr view "$(git -C <dir> branch --show-current)" --repo <slug> \
     --json number,title,url
 gh pr list --repo <slug> --state open --json number,title,isDraft,headRefName
 ```
+
+When `<slug>` is the fork's parent, pass the branch as `<owner>:<branch>`, with
+`<owner>` from `<origin-slug>`: a fork pull request matches only in that form,
+and a bare name could pick a same-named branch in the parent.
 
 With no open pull requests, say so and stop. Otherwise ask **Which PR do you
 want to review?** as a single choice of `<number>: <title>`. A structured
@@ -131,11 +142,11 @@ moved file, or dropped branch is where breakage hides.
 ## 5. Build the merge result
 
 Skip with `--no-build`, or when every check succeeded; say which in the report.
-Also skip, and say so, when `<slug>` is not the `origin` repository: this
-checkout cannot build that pull request. Otherwise build the **merge result**,
-since that is what the base branch would receive. Build it in a temporary
-detached worktree at a new path `<worktree>` in the scratchpad or temp
-directory, so the user's checkout is never touched:
+Also skip, and say so, when `<slug>` is not `<origin-slug>`: this checkout
+cannot build that pull request. Otherwise build the **merge result**, since
+that is what the base branch would receive. Build it in a temporary detached
+worktree at a new path `<worktree>` in the scratchpad or temp directory, so the
+user's checkout is never touched:
 
 ```bash
 git -C <dir> fetch origin <baseRefName>
