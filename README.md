@@ -58,7 +58,7 @@ Twenty-one skills, grouped by what they are for.
 
 | Skill | Invocation | What it does |
 |---|---|---|
-| [**skill-feedback**](skills/skill-feedback/SKILL.md) | `/skill-feedback [--review]` | Logs signals that a skill should change or that a new skill should exist, and reviews them into approved skill changes. |
+| [**skill-feedback**](skills/skill-feedback/SKILL.md) | `/skill-feedback [--review \| <signal>]` | Logs signals that a skill should change or that a new skill should exist, and reviews them into approved skill changes. |
 
 ### 📚 Package references
 
