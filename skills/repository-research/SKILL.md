@@ -12,8 +12,9 @@ argument-hint: "[--save] [scope or question]"
 
 Understand a codebase as it exists: trace behavior, explain an implementation,
 investigate a known problem, or establish why something works the way it does.
-Without `--save` nothing persists; with it, the findings go to
-`.repository-research/<descriptive-topic>.md`.
+Without `--save` this skill persists nothing itself; with it, the findings go
+to `.repository-research/<descriptive-topic>.md`. Work routed to
+`source-research` always writes its `.research/<topic>.md`.
 
 Neighbouring work has its own skill: proactively finding unknown bugs is
 `bughunt`, external framework or specification behavior is `source-research`,
@@ -78,7 +79,8 @@ redesign, API design, or implementation plan.
 
 With `--save`, update existing research on the same topic, keeping still-valid
 findings, and never overwrite unrelated research; persist conclusions and
-evidence, not the transcript. That file is the only lasting write: leave source,
-tests, configuration, and Git state alone. On every run, track any temporary
+evidence, not the transcript. That file and any `.research/<topic>.md` from
+`source-research` are the only lasting writes: leave source, tests,
+configuration, and Git state alone. On every run, track any temporary
 instrumentation or harness created to reproduce a failure, and remove only what
 this run created.
