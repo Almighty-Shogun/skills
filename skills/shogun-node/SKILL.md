@@ -31,10 +31,10 @@ Do not load it merely because a file happens to contain an unrelated
 | `webkit-native-bridge` | typed request and response bridge to a native WebKit host | `utils`, for types only |
 | `prototype-extensions` | methods added to `Array`, `String` and `Number` by prototype mutation | none, and it exports nothing |
 
-`utils` and `http-core` are the two roots, and every package except `http-core`
-and `prototype-extensions` depends on `utils`, so it is in `node_modules` of
-most projects in the scope whether or not `package.json` names it. Only
-`webkit-native-bridge` uses it for types alone.
+`utils` and `http-core` are the two roots, and every other package except
+`http-core` and `prototype-extensions` depends on `utils`, so it is in
+`node_modules` of most projects in the scope whether or not `package.json`
+names it. Only `webkit-native-bridge` uses it for types alone.
 
 Docs: https://node.docs.shogun.ms
 
