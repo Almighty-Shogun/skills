@@ -1,6 +1,10 @@
 ---
 name: repository-research
-description: Investigate how a repository currently behaves without modifying it. Traces implementations, known failures, extension points, tests, configuration, and relevant history; distinguishes confirmed facts from inference; and optionally persists findings with --save.
+description: >-
+  Investigate how a repository currently behaves without modifying it. Traces
+  implementations, known failures, extension points, tests, configuration, and
+  relevant history; distinguishes confirmed facts from inference; and
+  optionally persists findings with --save.
 argument-hint: "[--save] [scope or question]"
 ---
 
@@ -8,7 +12,7 @@ argument-hint: "[--save] [scope or question]"
 
 Understand a codebase as it exists: trace behavior, explain an implementation,
 investigate a known problem, or establish why something works the way it does.
-Without `--save` nothing is written; with it, the findings go to
+Without `--save` nothing persists; with it, the findings go to
 `.repository-research/<descriptive-topic>.md`.
 
 Neighbouring work has its own skill: proactively finding unknown bugs is
@@ -25,7 +29,9 @@ constraints, and any evidence required. For substantial investigation, hand it
 to a fresh research agent with repository access so exploration stays out of
 the parent context; a question answerable from one obvious place can be
 answered directly. Use several agents only for genuinely independent questions,
-and merge their results into one answer.
+and merge their results into one answer. Start each agent with an explicit
+model and effort level that fits its task: lower for simple read-only research,
+higher for tracing a defect to its root cause.
 
 Inspect only the files, symbols, tests, configuration, docs, history, and call
 paths the question needs, trace far enough to support each conclusion, and stop
@@ -72,6 +78,7 @@ redesign, API design, or implementation plan.
 
 With `--save`, update existing research on the same topic, keeping still-valid
 findings, and never overwrite unrelated research; persist conclusions and
-evidence, not the transcript. That file is the only write: leave source, tests,
-configuration, and Git state alone, and remove any temporary instrumentation or
-harness used to reproduce a failure.
+evidence, not the transcript. That file is the only lasting write: leave source,
+tests, configuration, and Git state alone. On every run, track any temporary
+instrumentation or harness created to reproduce a failure, and remove only what
+this run created.
