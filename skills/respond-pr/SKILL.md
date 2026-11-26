@@ -161,9 +161,11 @@ user asks for an edit. Replies that claim no change, such as answers and
 declined requests, do not wait. A reply that claims a change ("Updated
 this...") waits until the change is pushed and the PR head contains it:
 
-1. Offer the `commit` handoff with the changed files as its paths (plus
-   `--dir <dir>` outside the current repository); it owns grouping, commits,
-   and the push under its own confirmations.
+1. Record `HEAD`, then offer the `commit` handoff with the changed files as its
+   paths; it owns grouping, commits, and the push under its own confirmations.
+   Continue only when `HEAD` has moved and `git -C <dir> status --short --
+   <paths>` is clean; otherwise nothing was committed, so handle it as in
+   step 3.
 2. Re-read `headRefOid` with `gh pr view`, run `git -C <dir> fetch origin` so
    later pushes by others are present, then check
    `git -C <dir> merge-base --is-ancestor HEAD <headRefOid>`. `HEAD` is the
