@@ -7,14 +7,16 @@ description: >-
   with no skill covering it runs for the second time in a session. Logging
   never edits a skill; a review proposes changes and applies only approved
   ones.
-argument-hint: "[--review]"
+argument-hint: "[--review | <signal>]"
 ---
 
 # Skill Feedback
 
 Collect evidence for improving skills while working, and turn it into skill
 changes in a periodic review. Without `--review`, append one signal to the
-inbox; with it, read the inbox and propose changes.
+inbox; with it, read the inbox and propose changes. Free text in the arguments
+is the signal; without it, take the signal from the current session. With no
+signal and nothing in the session, log nothing and say so.
 
 Writing or editing the skills that come out of a review follows the skills
 repository's own conventions. Committing them belongs to `commit`.
@@ -78,23 +80,24 @@ to any skill, and at most one line in the reply naming the logged skill.
 
 With `--review`:
 
-1. Read the Inbox table and group the rows by skill. Repeated signals outweigh
-   single ones.
+1. Read the Inbox table and group the rows by skill, and `-` rows by the
+   sequence they describe. Repeated signals outweigh single ones.
 2. For each group, read the skill and decide: change it, create a new skill, or
    drop the signals because they were one-off, are already fixed, or conflict
    with what the skill is for.
 3. Propose the plan and wait for approval. A change that is too vague to act on
-   is reported as such, not guessed at.
+   is reported as such, not guessed at. When the user's instructions name no
+   source repository for the skills, ask for it in the same proposal.
 4. Apply only the approved changes, in the style of the existing skills, and
    nothing beyond what the signals support. Edit and create skills in their
    source repository, never in an installed copy: install directories such as
    `~/.claude/skills` or `~/.agents/skills` are overwritten by the next update,
    and a symlink there can point to another installed copy. Take the source
-   from the user's instructions; when none names it, ask, and leave the change
-   unapplied until answered.
+   from the user's instructions or the answer to step 3; without one, leave the
+   change unapplied.
 5. Move each handled row to the Reviewed table with an outcome:
    `changed <skill>`, `new skill <name>`, or `dropped: <reason>`. Rows that were
-   not approved or not applied stay in the Inbox.
+   not approved, not applied, or too vague to act on stay in the Inbox.
 
 An unattended run, with no one to approve, proposes only: it returns the plan
 and leaves the inbox and the skills unchanged.
