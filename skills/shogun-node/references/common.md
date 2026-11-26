@@ -144,8 +144,8 @@ which works against both a parent's middleware and the global list:
 { path: '/public', meta: { middleware: [guest], skipMiddleware: [auth] } }
 ```
 
-Parameterized middleware is a factory returning a definition, with the name built
-from the argument so each variant is distinct:
+Parameterized middleware is a factory returning a definition, with the name
+built from the argument so each variant is distinct:
 
 ```ts
 export default (permission: string) => defineMiddleware(
@@ -182,20 +182,20 @@ const search = debouncedRef('', 300);      // writes settle after 300ms
 ## Traps
 
 **`requiredRef` throws on read before assignment.** That is the point: it models
-"this exists by the time anything reads it" without `!` everywhere. Reading it in
-a synchronous `setup` before the assignment throws
+"this exists by the time anything reads it" without `!` everywhere. Reading it
+in a synchronous `setup` before the assignment throws
 `Required ref accessed before initialization`.
 
 **`useRouteMeta` is deeply readonly.** Writing to a nested key is a compile
 error, and the value is a copy, so it shares nothing with your route records. It
 merges every matched record key by key at any depth, unlike Vue Router's own
-`route.meta`, which replaces a nested object as soon as a child declares the same
-key.
+`route.meta`, which replaces a nested object as soon as a child declares the
+same key.
 
-**`useIsRoute` compares route *names*, not paths or segments.** It is true when a
-matched record is literally named that. `useIsRoute('settings')` is not true on a
-route named `settings.profile` unless a parent record is named `settings`. Pass
-`false` as the second argument for prefix matching, which does make
+**`useIsRoute` compares route *names*, not paths or segments.** It is true when
+a matched record is literally named that. `useIsRoute('settings')` is not true
+on a route named `settings.profile` unless a parent record is named `settings`.
+Pass `false` as the second argument for prefix matching, which does make
 `settings.profile` match.
 
 **`useRouteParam` deserializes only when a default is given.** With a non-null
@@ -229,9 +229,9 @@ its argument. Two unrelated middleware sharing a name silently collapse.
 first entry, so a parent's check re-runs when moving between its children.
 
 **`except` is only type-checked with Vue Router's typed routes configured.**
-Without that it accepts any string, so a renamed route leaves a name that matches
-nothing and silently stops exempting. Prefer `skipMiddleware`, which holds
-definitions, when a mistake would leave a route unguarded.
+Without that it accepts any string, so a renamed route leaves a name that
+matches nothing and silently stops exempting. Prefer `skipMiddleware`, which
+holds definitions, when a mistake would leave a route unguarded.
 
 **`translate` needs `registerI18n` first.** Call it once during startup. Without
 it, translations fall back rather than resolving, and the failure is quiet.
@@ -251,8 +251,8 @@ Router: `useRouteName`, `useRouteNames`, `useIsRoute`, `useRouteParam`,
 
 Middleware: `defineMiddleware`, `registerMiddleware`.
 
-Refs and utilities: `requiredRef`, `nullableRef`, `componentRef`, `debouncedRef`,
-`unwrapElement`, `unwrapTarget`.
+Refs and utilities: `requiredRef`, `nullableRef`, `componentRef`,
+`debouncedRef`, `unwrapElement`, `unwrapTarget`.
 
 i18n: `registerI18n`, `clearRegisteredI18n`, `translate`, `translationExists`.
 

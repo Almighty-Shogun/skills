@@ -17,8 +17,8 @@ this package. See `http-core.md`. Do not install `http-core` separately.
 bun add @almighty-shogun/cloudflare-worker
 ```
 
-Needs Wrangler 4+, and `@cloudflare/workers-types` as an optional peer, since the
-published types reference `ExecutionContext` and `ScheduledController`.
+Needs Wrangler 4+, and `@cloudflare/workers-types` as an optional peer, since
+the published types reference `ExecutionContext` and `ScheduledController`.
 
 The entry file's **default export** must be the value `createWorker()` returns,
 because Cloudflare calls `fetch` and `scheduled` on it.
@@ -80,8 +80,8 @@ The handler receives `(request, response, env)`:
 
 - `request` is a `Request` plus `params` and `ctx`, the `ExecutionContext`, so
   `request.ctx.waitUntil(...)` works.
-- `response` is the `HttpResponse` class itself, not an instance. Call statics on
-  it: `response.json(...)`, `response.notFound()`, `response.from(upstream)`.
+- `response` is the `HttpResponse` class itself, not an instance. Call statics
+  on it: `response.json(...)`, `response.notFound()`, `response.from(upstream)`.
 - `env` is your augmented `WorkerEnv`.
 
 It must resolve to an `HttpResponse`. Returning a native `Response` throws
@@ -89,8 +89,8 @@ It must resolve to an `HttpResponse`. Returning a native `Response` throws
 
 ### Build the collection
 
-A collection is an object of named exports, one entry per export, each a route or
-an array of routes. A namespace import is the normal way to build it.
+A collection is an object of named exports, one entry per export, each a route
+or an array of routes. A namespace import is the normal way to build it.
 
 ```ts
 // routes/index.ts
@@ -127,8 +127,8 @@ The handler receives `(run, env)`, where `run` holds `controller`, `ctx` and
 crons = ["5 2 * * *"]
 ```
 
-Several tasks may share one expression; they are collected into one entry and run
-in the order their exports were collected, which is export name order.
+Several tasks may share one expression; they are collected into one entry and
+run in the order their exports were collected, which is export name order.
 
 ### Serve static assets
 
@@ -164,8 +164,8 @@ shape: `'json'`, `'text'`, or `null` for an empty body.
 ## Behavior worth knowing
 
 **Route order is computed, not declaration order.** Compiled routes sort segment
-by segment, static before dynamic, then alphabetically, and the first match wins.
-So `/users/me` beats `/users/:id` regardless of which was declared first.
+by segment, static before dynamic, then alphabetically, and the first match
+wins. So `/users/me` beats `/users/:id` regardless of which was declared first.
 
 **Matching is exact on segment count.** There are no optional or wildcard
 segments. `/users/:id` does not match `/users`, and nothing matches a trailing
@@ -194,13 +194,15 @@ exact string equality against `controller.cron` after trimming, so the string in
 ## Traps
 
 **Cron Triggers run in UTC and ignore daylight saving.** "Every day at 18:05
-Europe/Amsterdam" has no correct cron expression: `5 16 * * *` is right in summer
-and an hour out in winter. Either accept the shift, or schedule hourly and check
-the local time inside the handler. Ask which; there is no safe default.
+Europe/Amsterdam" has no correct cron expression: `5 16 * * *` is right in
+summer and an hour out in winter. Either accept the shift, or schedule hourly
+and check the local time inside the handler. Ask which; there is no safe
+default.
 
 **`onError` does not cover scheduled tasks.** It is only wired into `fetch`. An
-error thrown by a scheduled handler propagates to the runtime, which is what makes
-Cloudflare record the failure and retry, so do not treat that as a bug to catch.
+error thrown by a scheduled handler propagates to the runtime, which is what
+makes Cloudflare record the failure and retry, so do not treat that as a bug to
+catch.
 
 **`response` is the class, not an instance.** `response.json(body)` is a static
 call. There is no `new`, and no instance to configure first.

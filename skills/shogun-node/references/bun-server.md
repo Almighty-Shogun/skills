@@ -100,8 +100,8 @@ createServer({ routes, port: 3000 });
 
 ### Return a file
 
-`HttpResponse.file(body, options)` is the one factory this package adds on top of
-`http-core`.
+`HttpResponse.file(body, options)` is the one factory this package adds on top
+of `http-core`.
 
 ```ts
 return response.file(Bun.file('./report.pdf'), {
@@ -125,8 +125,8 @@ this, so `automaticHead` and `automaticOptions` are `never` in that mode.
 ## Behavior worth knowing
 
 **Bun owns path matching**, unlike the Worker package. Routes compile to an
-object keyed by path, handed to `Bun.serve()`, so specificity and ordering follow
-Bun's rules rather than anything this package computes.
+object keyed by path, handed to `Bun.serve()`, so specificity and ordering
+follow Bun's rules rather than anything this package computes.
 
 **`HEAD` and `OPTIONS` are automatic**, both on by default. A `HEAD` with no
 handler runs the `GET` handler and returns its status, status text and headers
@@ -139,9 +139,9 @@ compilation happens once at startup. A duplicate method and path throws
 `ConflictingRoutePathsError`; the same path registered as both an HTML route and
 a method route throws `ConflictingRouteTypeError`.
 
-**A thrown error is caught by Bun's own `error` option.** `createServer` installs
-a default that answers `500` shaped by `defaultErrorResponse`. Pass your own
-`error` to replace it entirely.
+**A thrown error is caught by Bun's own `error` option.** `createServer`
+installs a default that answers `500` shaped by `defaultErrorResponse`. Pass
+your own `error` to replace it entirely.
 
 ## Traps
 
@@ -149,15 +149,15 @@ a default that answers `500` shaped by `defaultErrorResponse`. Pass your own
 call. No `new`, nothing to configure first.
 
 **HTML routes bypass everything.** They are not handlers, so a path served by
-`defineHtmlRoute` gets no automatic `HEAD`, no `OPTIONS` and no `405`. Bun serves
-the bundle directly.
+`defineHtmlRoute` gets no automatic `HEAD`, no `OPTIONS` and no `405`. Bun
+serves the bundle directly.
 
 **Error handling is Bun's `error` option, not an `onError` option.** That is the
 opposite of `cloudflare-worker`, which owns its dispatch and so takes `onError`.
 Here the hook is passed straight through to `Bun.serve()`.
 
-**`file()` returns `HttpBaseResponse`, not a Bun response.** Return it as-is from
-a handler; do not unwrap it yourself.
+**`file()` returns `HttpBaseResponse`, not a Bun response.** Return it as-is
+from a handler; do not unwrap it yourself.
 
 **Two copies of `http-core` break responses.** Handler results are checked with
 `instanceof HttpBaseResponse`. Two resolved versions make a valid response fail
@@ -185,7 +185,8 @@ Errors: `EmptyHtmlRoutePathsError`, `DuplicateHtmlRouteError` (carries `path`),
 
 Types: `RouteHandler`, `RouteDefinition`, `HtmlRouteDefinition`, `RouteExport`,
 `RouteCollection`, `NativeRouteCollection`, `CompileRoutesOptions`,
-`CreateServerOptions`, `CreateServerDefinedOptions`, `CreateServerNativeOptions`.
+`CreateServerOptions`, `CreateServerDefinedOptions`,
+`CreateServerNativeOptions`.
 
 Plus everything from `http-core`.
 

@@ -1,8 +1,8 @@
 # @almighty-shogun/http-core
 
 Runtime-agnostic HTTP vocabulary: status and method constants, the
-`HttpBaseResponse` factory class, query-string readers and the error classes both
-server packages throw.
+`HttpBaseResponse` factory class, query-string readers and the error classes
+both server packages throw.
 
 Verify signatures against the copy installed in the project, resolving the
 declaration entry from the package's own `exports` rather than assuming a path.
@@ -14,8 +14,8 @@ Docs: https://node.docs.shogun.ms/http-core/
 `bun-server` and `cloudflare-worker` re-export **every** export of this package
 from their own root. If the project has either, import from that instead and do
 **not** add `http-core` to `package.json`. Two resolved copies break the
-`instanceof HttpBaseResponse` check a handler result is tested against, turning a
-valid response into `InvalidHandlerResultError`.
+`instanceof HttpBaseResponse` check a handler result is tested against, turning
+a valid response into `InvalidHandlerResultError`.
 
 Install it directly only when building your own server wrapper for a runtime
 neither package covers.
@@ -75,9 +75,9 @@ const page = queryInteger(request, 'page', 1);   // optional, defaults to 1
 const id = queryString(request, 'id');           // required, throws if absent
 ```
 
-`queryBoolean` accepts `1`, `on`, `true`, `yes` and the empty string as true, and
-`0`, `false`, `no`, `off` as false, case-insensitively. The empty string being
-true means `?debug` alone reads as enabled.
+`queryBoolean` accepts `1`, `on`, `true`, `yes` and the empty string as true,
+and `0`, `false`, `no`, `off` as false, case-insensitively. The empty string
+being true means `?debug` alone reads as enabled.
 
 `queryDate` parses ISO 8601 through Luxon and returns a `DateTime`.
 
@@ -137,30 +137,31 @@ raises `InvalidJsonBodyError`, with the original `TypeError` as `cause`. It
 happens while building the response, not while sending it.
 
 **`redirect()` puts the target in the first argument**, not in an options field,
-and defaults to `302 Found`. `redirect(url, { status: HttpStatus.MovedPermanently })`
-for a permanent one.
+and defaults to `302 Found`.
+`redirect(url, { status: HttpStatus.MovedPermanently })` for a permanent one.
 
 **Named status helpers reject `status`.** They take `FixedStatusOptions`, which
-has no `status` field, so `notFound(body, { status: 410 })` does not compile. Use
-`custom(body, HttpStatus.Gone)`.
+has no `status` field, so `notFound(body, { status: 410 })` does not compile.
+Use `custom(body, HttpStatus.Gone)`.
 
-**The route errors live here, not in the server packages.** `DuplicateRouteError`
-and `ConflictingRoutePathsError` are shared, while the HTML-route and scheduling
-errors belong to `bun-server` and `cloudflare-worker` respectively.
+**The route errors live here, not in the server packages.**
+`DuplicateRouteError` and `ConflictingRoutePathsError` are shared, while the
+HTML-route and scheduling errors belong to `bun-server` and `cloudflare-worker`
+respectively.
 
 ## Exports
 
 Response: `HttpBaseResponse`.
 
-Query: `queryString`, `queryInteger`, `queryNumber`, `queryBoolean`, `queryDate`,
-`queryList`, `queryNumericList`.
+Query: `queryString`, `queryInteger`, `queryNumber`, `queryBoolean`,
+`queryDate`, `queryList`, `queryNumericList`.
 
 Constants: `HttpStatus`, `HttpMethod`.
 
-Errors: `MissingParameterError`, `InvalidParameterError`, `InvalidJsonBodyError`,
-`InvalidHandlerResultError`, `InvalidRouteCollectionError`,
-`EmptyRouteCollectionError`, `EmptyRouteExportError`, `DuplicateRouteError`,
-`ConflictingRoutePathsError`.
+Errors: `MissingParameterError`, `InvalidParameterError`,
+`InvalidJsonBodyError`, `InvalidHandlerResultError`,
+`InvalidRouteCollectionError`, `EmptyRouteCollectionError`,
+`EmptyRouteExportError`, `DuplicateRouteError`, `ConflictingRoutePathsError`.
 
 Types: `CoreOptions`, `ImageOptions`, `FixedStatusOptions`, `RedirectOptions`,
 `DefaultErrorResponse`, `ImageContentType`, `RedirectHttpStatus`.

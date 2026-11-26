@@ -126,8 +126,8 @@ just null and undefined. That is usually what you want for form input and
 usually not what you want for a flag, so reach for an explicit `!== null` when
 emptiness is meaningful.
 
-**Dates are Luxon `DateTime`, never `Date`.** Passing a native `Date` to a format
-helper does not compile. Convert with `DateTime.fromJSDate(date)`.
+**Dates are Luxon `DateTime`, never `Date`.** Passing a native `Date` to a
+format helper does not compile. Convert with `DateTime.fromJSDate(date)`.
 
 **`deserialize` needs a default of the right type.** The default is what selects
 the handler, so `deserialize(raw, '')` reads a serialized number back as a

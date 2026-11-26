@@ -103,10 +103,10 @@ declare function usePersistentRef<T extends {}>(key: string, defaultValue: T): R
 ```
 
 `useLocalStorage` always holds a value; `usePersistentRef` is nullable and
-removes the key when set to `null`. Its two overloads mean a `null` default gives
-`Ref<Nullable<string>>`, since there is nothing to deserialize against. Both
-default to `utils`'s `serialize` and `deserialize`, and both degrade to a plain
-ref when `window` is undefined.
+removes the key when set to `null`. Its two overloads mean a `null` default
+gives `Ref<Nullable<string>>`, since there is nothing to deserialize against.
+Both default to `utils`'s `serialize` and `deserialize`, and both degrade to a
+plain ref when `window` is undefined.
 
 ## Document
 
@@ -297,8 +297,8 @@ declare function unwrapTarget(
 ): Nullable<HTMLTarget>;
 ```
 
-`requiredRef` throws on read before assignment. `componentRef` takes the imported
-component itself, so the ref is typed as its instance.
+`requiredRef` throws on read before assignment. `componentRef` takes the
+imported component itself, so the ref is typed as its instance.
 
 ## i18n
 

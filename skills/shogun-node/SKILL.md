@@ -31,9 +31,9 @@ Do not load it merely because a file happens to contain an unrelated
 | `webkit-native-bridge` | typed request and response bridge to a native WebKit host | `utils`, for types only |
 | `prototype-extensions` | methods added to `Array`, `String` and `Number` by prototype mutation | none, and it exports nothing |
 
-`utils` and `http-core` are the two roots, and every other package except
-`prototype-extensions` depends on `utils`, so it is in `node_modules` of most
-projects in the scope whether or not `package.json` names it. Only
+`utils` and `http-core` are the two roots, and every package except `http-core`
+and `prototype-extensions` depends on `utils`, so it is in `node_modules` of
+most projects in the scope whether or not `package.json` names it. Only
 `webkit-native-bridge` uses it for types alone.
 
 Docs: https://node.docs.shogun.ms
@@ -86,14 +86,14 @@ path such as `dist/index.d.mts`, which is not stable across versions.
 Priority: installed declarations and package exports, then the matching bundled
 reference guide, then the documentation site.
 
-If a guide and the installed contract disagree, follow the installed contract and
-mention the mismatch when it materially affects the answer or the change.
+If a guide and the installed contract disagree, follow the installed contract
+and mention the mismatch when it materially affects the answer or the change.
 
 ## Host repository conventions win
 
 Read the applicable host-project `AGENTS.md`, `CLAUDE.md`, and any package or
-module-local instructions. The consuming project's conventions take priority over
-development conventions from the `@almighty-shogun` package repositories.
+module-local instructions. The consuming project's conventions take priority
+over development conventions from the `@almighty-shogun` package repositories.
 
 ## Implementation permission
 
@@ -110,10 +110,10 @@ newly introduced.
 Inspect `package.json`, workspace manifests where relevant, the lockfile, and
 installed `node_modules`.
 
-Presence in `node_modules` does **not** authorize direct use: a package may exist
-only because another dependency installed it transitively. When project source
-imports an `@almighty-shogun/*` package directly, it normally belongs in the
-applicable manifest as a direct dependency.
+Presence in `node_modules` does **not** authorize direct use: a package may
+exist only because another dependency installed it transitively. When project
+source imports an `@almighty-shogun/*` package directly, it normally belongs in
+the applicable manifest as a direct dependency.
 
 When one is missing, verify it is actually necessary, identify the correct
 manifest, determine the package manager from repository evidence, show the exact
@@ -176,8 +176,8 @@ ignoring a clear package-contract mismatch.
 ## Scope
 
 This is an implementation and reference skill, not a Git workflow: the global
-instructions on Git and outward-facing actions apply unchanged, and completed Git
-work goes to the `commit` skill.
+instructions on Git and outward-facing actions apply unchanged, and completed
+Git work goes to the `commit` skill.
 
 Keep context small. Load one package guide, use index files only for an exact
 lookup, inspect installed declarations directly rather than pasting them into

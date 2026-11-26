@@ -40,8 +40,8 @@ is a decision that belongs to the application.
 | `addOrRemove(value)` | a new array with the value toggled in or out |
 | `isEmpty()` | `length === 0` |
 
-`removeDuplicates` and `addOrRemove` are constrained to `Array<string | number>`,
-because both compare by identity.
+`removeDuplicates` and `addOrRemove` are constrained to
+`Array<string | number>`, because both compare by identity.
 
 ### String
 
@@ -80,8 +80,8 @@ array they return `undefined` at runtime while the type says otherwise. Guard
 with `isEmpty()` first.
 
 **`delete(index)` does not mutate.** It returns a new array via `toSpliced`, so
-`items.delete(0)` on its own does nothing. Assign the result. The name reads like
-`Array.prototype.splice`, which does mutate, and that is the easy mistake.
+`items.delete(0)` on its own does nothing. Assign the result. The name reads
+like `Array.prototype.splice`, which does mutate, and that is the easy mistake.
 
 **`removeDuplicates` and `addOrRemove` compare by identity.** They are typed for
 `string | number` only, so they will not deduplicate objects, and the type stops
