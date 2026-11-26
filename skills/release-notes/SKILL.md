@@ -26,6 +26,9 @@ release-notes [project] [<base-ref>] [--file]
 release-notes [project] --redo <tag> [--file]
 ```
 
+`--redo` takes no `<base-ref>`; refuse the combination rather than ignore
+either.
+
 A project selector picks one repository when the working directory holds
 several; discover them, never hardcode names, and ask when the argument does
 not identify one. One repository per run.
@@ -49,13 +52,27 @@ non-emoji structure.
 Derive `<dir>`, `<slug>`, and `<default-branch>`; use `git -C <dir>` and
 `--repo <slug>` throughout. Run `git -C <dir> fetch origin --tags --prune`.
 
-- Direct: head is `origin/<default-branch>`; base is the given ref, else the
-  most recent published release appropriate to the context, else the first
-  commit.
-- `--redo <tag>`: head is the tag (which must resolve locally); base is the
-  nearest earlier published release, else the first commit.
+- Direct: head is `origin/<default-branch>`, described as a stable release
+  unless the user says the next one is a prerelease.
+- `--redo <tag>`: head is the tag (which must resolve locally), a prerelease
+  when its release is one.
 - From the `release` skill: accept its resolved base, head, target tag, and
-  prerelease state as given.
+  prerelease state as given; it resolves the base with this rule.
+
+The base rule is the same in every mode: a given `<base-ref>` wins; otherwise
+candidates are published releases whose tag is an ancestor of the head,
+excluding the head's own tag, counting only non-prereleases for a stable head
+and releases of any kind for a prerelease head, so successive betas describe
+changes since the previous beta. Take the nearest such ancestor of the head (no
+other candidate lies between it and the head); with none, the first commit.
+List every release, not only the latest 100, so an old head's base is not
+missed:
+
+```bash
+gh release list --repo <slug> --exclude-drafts --limit 10000 \
+  --json tagName,isPrerelease,publishedAt
+git -C <dir> merge-base --is-ancestor <tag> <head>
+```
 
 Verify both refs resolve. If they are the same commit, report no changes and
 stop.
@@ -117,10 +134,10 @@ A quote-style summary line is optional, used only when the release has a real
 theme: `> Adds package-level cache configuration and fixes stale cache
 invalidation.`
 
-End with `**Full Changelog:** https://github.com/<slug>/compare/<base>...<compare-head>`
-when the refs make the comparison meaningful, where `<compare-head>` is the
-future tag for a release workflow, the existing tag for `--redo`, or the
-resolved head otherwise.
+When the refs make the comparison meaningful, end with
+`**Full Changelog:** https://github.com/<slug>/compare/<base>...<compare-head>`,
+where `<compare-head>` is the future tag for a release workflow, the existing
+tag for `--redo`, or the resolved head otherwise.
 
 ```markdown
 # `@example/core`
@@ -149,7 +166,7 @@ resolved head otherwise.
 ```
 
 Write in English unless asked otherwise, describing concrete observable change:
-`` `usePersistentRef` now preserves explicit null values during deserialization.``
+`` `usePersistentRef` now keeps explicit null values during deserialization.``
 No marketing voice ("This exciting release brings..."), vague catch-alls
 ("Various improvements and fixes"), or Conventional Commit prefixes.
 
@@ -166,8 +183,9 @@ is the same requested output.
 
 Fetch the current notes, generate the full replacement, show both, and ask.
 Approval to generate is not approval to edit. Only then run
-`gh release edit <tag> --repo <slug> --notes-file <temporary-file>`, with the
-temporary file removed after a successful update. The edit changes only that
+`gh release edit <tag> --repo <slug> --notes-file <temporary-file>`, with
+`<temporary-file>` in the scratchpad or temp directory, never in the working
+tree, and removed after a successful update. The edit changes only that
 release's notes.
 
 ## Final response
