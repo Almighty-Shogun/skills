@@ -29,8 +29,9 @@ written. A user asking for fixes after a plain `--verify` report enters the
 same fix phase.
 
 Targets: a file is that file; a directory is every `.cs` file beneath it,
-excluding generated and build output such as `bin` and `obj`; no argument resolves the relevant project from the
-repository, and several plausible projects with no clear target means asking.
+excluding generated and build output such as `bin` and `obj`; no argument
+resolves the relevant project from the repository, and several plausible
+projects with no clear target means asking.
 
 ## Precedence
 
@@ -51,12 +52,14 @@ allows a choice of phrasing, follow the form the package already uses.
 When the project documents members, document every member in scope to the same
 standard, private ones included: types, methods, properties, fields,
 constructors and primary-constructor parameters, interfaces, attributes, enum
-members, and extension-block receivers.
+members, and extension-block receivers. When it does not, document the explicit
+target only; ask only when a run with no argument finds an undocumented project.
 
-Use the project's `<author>` and `<since>` values. Without a more specific
-value, use `<author>Almighty-Shogun</author>` and `<since>Unreleased</since>`.
-`<since>` records when a member was added; changing its signature or body
-leaves it alone.
+Take `<author>` and `<since>` values from the project's existing tags or from
+user-level or repository-level instructions; never invent an author. With no
+value from any of these, leave the tag out. Where the project already uses
+`<since>`, a new member gets `<since>Unreleased</since>`. `<since>` records
+when a member was added; changing its signature or body leaves it alone.
 
 ## Verify before writing
 
@@ -228,6 +231,9 @@ and every other tag type its own.
 /// <since>4.0.0</since>
 ```
 
+The `<author>` and `<since>` values are illustrative; take them from the
+project's tags or instructions.
+
 Use the one-line form whenever it fits within `.editorconfig`
 `max_line_length`, counting indentation, `///`, and tags; otherwise put the
 text on its own line between the opening and closing tag. A tag that needs
@@ -278,18 +284,19 @@ Authoring edits XML documentation blocks only; `--verify` edits nothing until
 fixes are approved. Leave implementation code and Git state alone, and protect
 unrelated uncommitted work.
 
-# Verification mode
+## Verification mode
 
 These rules extend the authoring standard for `--verify`.
 
 Verification stays independent of authoring: never trust a previous authoring
 pass's conclusions, and prefer fresh verifier sub-agents for that reason. Split
-large targets by project or directory across isolated sub-agents, giving
-each only this standard and its scope. Spot-check their actionable findings and
-downgrade anything without evidence to `UNCHECKED`. Never describe a partial
-pass as complete.
+large targets by project or directory across isolated sub-agents, giving each
+only this standard and its scope. Start each with an explicit model and effort
+level that fits its task: highest for verification and fixes. Spot-check their
+actionable findings and downgrade anything without evidence to `UNCHECKED`.
+Never describe a partial pass as complete.
 
-## Dimensions
+### Dimensions
 
 **Accuracy.** Read each block against the implementation it sits on and judge
 each claim separately. Ask two questions: is it true, and does it describe
@@ -323,7 +330,7 @@ voice, noun-phrase returns, reference tags, `<author>`/`<since>` (none below
 `<inheritdoc />`), the extension receiver `<param>`, and correctly targeted
 crefs.
 
-## Before reporting FALSE or STALE
+### Before reporting FALSE or STALE
 
 A false positive gets a correct doc "fixed" into a wrong one. First ask what
 would make the claim true and check it: an earlier guard, a caller or factory
@@ -332,12 +339,12 @@ Report only after that defense fails, with the decisive evidence.
 
 `<inheritdoc />` members stay in scope: resolve the inherited contract, check
 each implementation honors it, and report a divergence against the
-implementation, naming the inherited source. For cross-component claims, open the other
-component. Check exceptions in both directions, flags in both states, and that
-a cref which resolves still points at the right member after a refactor. Git
-history is a signal, not proof.
+implementation, naming the inherited source. For cross-component claims, open
+the other component. Check exceptions in both directions, flags in both states,
+and that a cref which resolves still points at the right member after a
+refactor. Git history is a signal, not proof.
 
-## Report
+### Report
 
 Group by file, ordered: `FALSE`, `STALE`, `UNINTENDED`, `JUSTIFICATION`,
 `UNVERIFIABLE`, `UNCHECKED`, `MISSING DOC`, `MISSING TAG`, `VERBOSE`, then shape
@@ -371,7 +378,7 @@ Close with files read, files skipped and why, counts per category, build
 status, and whether the pass was complete. Say plainly when the docs are
 accurate throughout; never invent marginal findings.
 
-## `--fix`
+### `--fix`
 
 Without `--fix`, stop after the report. With it, apply only the approved
 corrections: re-read the code first, treat every replacement sentence as a new
