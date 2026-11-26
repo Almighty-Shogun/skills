@@ -128,8 +128,8 @@ Apply only the configured changes, show the diff, and run the release
 validation (step 7) against that tree. If it fails, stop with no commit, push,
 or release. Otherwise show the exact changes and ask to commit and push them.
 
-On approval, run `commit --auto-all` with `<dir>` and the metadata file paths
-as its scope, or follow `../commit/SKILL.md` inline as if invoked so when the
+On approval, run `commit --auto-all --dir <dir>` with the metadata file paths
+as its paths, or follow `../commit/SKILL.md` inline as if invoked so when the
 harness cannot invoke skills. This approval covers the commit and its push, so
 `--auto-all` skips the duplicate confirmations, but `commit` still inspects,
 stages narrowly, validates, and preserves unrelated work. The commit excludes
