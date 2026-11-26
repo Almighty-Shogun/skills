@@ -62,7 +62,8 @@ behavior is `repository-research`, and planning is `plan-implementation`
 (`.plan-implementation/`). When the user asks to implement an artifact from one
 of those, treat it as input: confirm it still applies, then do not repeat its
 analysis. A saved plan lets research be skipped, but is still checked against
-the current code.
+the current code. In a `bughunt` report, an answered `Desired solution:` block
+is the approved design; an unanswered one means the design is not settled.
 
 ## Research
 
