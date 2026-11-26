@@ -138,9 +138,12 @@ stages narrowly, validates, and preserves unrelated work. The commit excludes
 `.release-notes/`, unrelated changes, and anything beyond the configured
 metadata.
 
-Afterwards, record the last commit `commit` created (`HEAD` after it returns,
-since it may split the metadata) as `<metadata-sha>`, fetch again, and confirm
-the push landed:
+Record `HEAD` before the handoff. Afterwards, continue only when `HEAD` has
+moved and `git -C <dir> status --short -- <metadata paths>` is clean; otherwise
+`commit` created nothing or left metadata behind, so stop with no release.
+Record the last commit `commit` created (`HEAD` after it returns, since it may
+split the metadata) as `<metadata-sha>`, fetch again, and confirm the push
+landed:
 
 ```bash
 git -C <dir> merge-base --is-ancestor "<metadata-sha>" "origin/<default-branch>"
