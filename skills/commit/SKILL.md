@@ -76,7 +76,8 @@ staged and unstaged hunks of one file cannot be separated safely, ask.
 
 Group by what changes accomplish, not by directory or file type. The test:
 
-> Could this part reasonably be reviewed, reverted, or cherry-picked without the other part?
+> Could this part reasonably be reviewed, reverted, or cherry-picked without
+> the other part?
 
 If yes, it is probably a separate commit. A fix travels with its regression
 test, a feature with its tests, a manifest change with the lockfile update it
@@ -158,10 +159,14 @@ For each group in turn:
    preserved staged state that belongs to it.
 2. Validate the staged group: always `git diff --cached --check`, plus checks
    matching the scope and repository instructions (tests, build, or typecheck
-   for code; the regression test for a fix; a docs build for docs). Passing
-   checks do not excuse an obviously wrong diff. If a required check fails,
-   do not commit; report it, and change code only when the user asked this
-   workflow to fix it. Report checks that were skipped or impractical.
+   for code; the regression test for a fix; a docs build for docs). Only
+   `--check` sees the index alone: tests, builds, and typechecks run on the
+   working tree, so they also see the unstaged changes of later groups; say so
+   in the report when that matters. Passing checks do not excuse an obviously
+   wrong diff. If a required check fails, do not commit; stop at that group,
+   leave later groups uncommitted, never push the partial set, report it, and
+   change code only when the user asked this workflow to fix it. Report checks
+   that were skipped or impractical.
 3. `git commit -m "<message>"`, then `git status --short`.
 
 If the working tree changes unexpectedly mid-workflow, stop and re-inspect.
@@ -174,10 +179,10 @@ Created:
 - d45ef67 docs: document serializer behavior
 
 Validation:
-- bun test ✓
-- bun run typecheck ✓
+- bun test passed
+- bun run typecheck passed
 
-Branch: feature/serialization
+Branch: feat/serialization
 ```
 
 Mention skipped or failed validation; do not narrate each Git command.
