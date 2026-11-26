@@ -1,10 +1,14 @@
 ---
 name: plan-implementation
-description: Produce an implementation-ready, repository-grounded plan for an already-understood change without modifying code. Reuses relevant design/research artifacts, identifies exact files and symbols, sequences changes, and optionally persists the plan with --save.
+description: >-
+  Produce an implementation-ready, repository-grounded plan for an
+  already-understood change without modifying code. Reuses relevant
+  design/research artifacts, identifies exact files and symbols, sequences
+  changes, and optionally persists the plan with --save.
 argument-hint: "[--save] <change to plan>"
 ---
 
-# Implementation Plan
+# Plan Implementation
 
 Decide how a chosen feature, fix, refactor, or migration should be implemented,
 before any code changes. Without `--save`, the plan is returned in chat; with
@@ -21,7 +25,9 @@ Reduce the request to a Task Contract: Goal, Scope, Constraints, Known
 requirements, Acceptance criteria when supplied, and Non-goals when they prevent
 scope creep. For a plan that needs real exploration, hand that contract to a
 fresh planning agent with repository access, so its exploration stays out of the
-parent context; a small, well-located change can be planned directly.
+parent context; a small, well-located change can be planned directly. Start the
+agent with an explicit model and effort level that fits its task: lower for a
+simple read-only plan, higher for one that settles design or a root cause.
 
 The planner inspects the relevant code, tests, configuration, and conventions;
 picks the smallest correct implementation that reuses existing patterns;
