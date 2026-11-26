@@ -63,14 +63,13 @@ coupling, and demonstrated friction, not pattern preference.
 Use reconnaissance to find distinct structural areas, then give each
 independent area its own sub-agent with only the context it needs. Start each
 with an explicit model and effort level that fits its task: higher for areas
-whose findings need deep tracing, lower for simple read-only reconnaissance.
-Each hands off:
+needing deep tracing, lower for shallow ones. Each hands off:
 
 ```text
 Area:
 Type:
 Evidence:
-Impact:
+Impact: (only when justified)
 Suggested direction:
 Confidence:
 Relevant files/modules:
