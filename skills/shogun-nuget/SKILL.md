@@ -206,8 +206,9 @@ Every package with a settings record binds one `appsettings.json` section
 through `AddConfiguration`, which turns on data-annotation validation and
 validation on start, so a missing or invalid section fails at startup rather
 than at first use. The exceptions are CORS (`AddCorsPolicy`) and Serilog
-(`ReadFrom.Configuration`), which read their sections directly, without startup
-validation. `references/configuration.md` lists every section, key and default.
+(`ReadFrom.Configuration`), which read their sections directly, without
+data-annotation validation on start. `references/configuration.md` lists every
+section, key and default.
 
 Do not change runtime, build or hosting configuration merely to make a package
 convenient. When a consequential change is genuinely required, explain why, show
