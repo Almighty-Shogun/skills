@@ -64,9 +64,11 @@ candidates are published releases whose tag is an ancestor of the head,
 excluding the head's own tag, counting only non-prereleases for a stable head
 and releases of any kind for a prerelease head, so successive betas describe
 changes since the previous beta. Take the nearest such ancestor of the head (no
-other candidate lies between it and the head); with none, the first commit.
-List every release, not only the latest 100, so an old head's base is not
-missed:
+other candidate lies between it and the head). With none, the base is the empty
+tree (`git -C <dir> hash-object -t tree /dev/null`), so the first commit's
+changes are included; use `git log <head>` for the commit list, since a tree
+cannot start a log range. List every release, not only the latest 100, so an
+old head's base is not missed:
 
 ```bash
 gh release list --repo <slug> --exclude-drafts --limit 10000 \
@@ -75,12 +77,13 @@ git -C <dir> merge-base --is-ancestor <tag> <head>
 ```
 
 Verify both refs resolve. If they are the same commit, report no changes and
-stop.
+stop. The empty-tree base never equals the head, so a one-commit repository
+with no earlier release still gets notes for that commit.
 
 ## Evidence
 
 ```bash
-git -C <dir> log --oneline --no-merges <base>..<head>
+git -C <dir> log --oneline --no-merges <base>..<head>  # empty tree: <head>
 git -C <dir> diff --name-status <base>..<head>
 git -C <dir> diff --stat <base>..<head>
 ```
@@ -134,7 +137,8 @@ A quote-style summary line is optional, used only when the release has a real
 theme: `> Adds package-level cache configuration and fixes stale cache
 invalidation.`
 
-When the refs make the comparison meaningful, end with
+When the refs make the comparison meaningful (never for the empty-tree base),
+end with
 `**Full Changelog:** https://github.com/<slug>/compare/<base>...<compare-head>`,
 where `<compare-head>` is the future tag for a release workflow, the existing
 tag for `--redo`, or the resolved head otherwise.
