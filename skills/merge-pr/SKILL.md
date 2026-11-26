@@ -20,11 +20,11 @@ Allowed: merge the selected pull request, delete its remote head branch when
 appropriate, fast-forward its base branch locally, and delete the local head
 branch with `git branch -d`. Never edit code, fix review or CI findings, post
 replies or review comments (`review-pr --comment` owns that flow), create
-commits, rebase, reset, stash, amend, force-push, squash, close without merging,
-or create releases, tags, or version commits. Blockers that need code changes
-go to `review-pr`, `respond-pr`, `fix-pr`, or `delegate-task`. If the
-environment blocks a Git or GitHub mutation, report it rather than working
-around it.
+commits, rebase, reset, stash, amend, force-push, squash or rebase-merge unless
+the user chooses it in step 7, close without merging, or create releases, tags,
+or version commits. Blockers that need code changes go to `review-pr`,
+`respond-pr`, `fix-pr`, or `delegate-task`. If the environment blocks a Git or
+GitHub mutation, report it rather than working around it.
 
 ## Invocation
 
@@ -58,22 +58,29 @@ Read the chosen one:
 ```bash
 gh pr view <number> --repo <slug> --json \
   number,title,state,isDraft,mergeable,mergeStateStatus,reviewDecision,\
-headRefName,headRepositoryOwner,headRepository,baseRefName,url,headRefOid,\
-statusCheckRollup,comments,reviews
+headRefName,headRepositoryOwner,headRepository,isCrossRepository,baseRefName,\
+url,headRefOid,statusCheckRollup,comments,reviews
 ```
 
 The merge target is the pull request's `baseRefName`, which need not be the
 default branch.
 
+Local steps (2, 6, 11, and the remote branch deletion in 10) need `<dir>` to be
+a clone whose `origin` is `<slug>` (`git -C <dir> remote get-url origin`). For
+a URL from another repository with no such clone, skip them and report each as
+skipped.
+
 ## 2. Local working-copy safety
 
 Do not switch branches yet. Run `git status --short`, `git branch
---show-current`, and `git fetch origin`. A dirty tree does not block the remote
-merge, since the merge does not touch the local branch, but work out whether the
-post-merge switch and cleanup would collide with local work: tracked
-modifications against the target base, and untracked files whose paths exist on
-it. Never reset, stash, clean, discard, or carry user modifications onto
-another branch because Git happens to allow it.
+--show-current`, `git fetch origin`, and `git fetch origin pull/<number>/head`;
+the last makes `<head-sha>` local even for a fork pull request, whose commits
+no `origin` branch carries. A dirty tree does not block the remote merge, since
+the merge does not touch the local branch, but work out whether the post-merge
+switch and cleanup would collide with local work: tracked modifications against
+the target base, and untracked files whose paths exist on it. Never reset,
+stash, clean, discard, or carry user modifications onto another branch because
+Git happens to allow it.
 
 If local work blocks only cleanup, the merge may proceed once the user knows
 cleanup will stay incomplete. If local state makes the merge itself ambiguous,
@@ -97,6 +104,15 @@ before proceeding; `BEHIND` is reported, never auto-updated; `UNKNOWN` is
 never assumed safe. Repository-specific semantics may override these. An
 empty check rollup means **no checks ran**, not that they passed. Never weaken
 or bypass branch protection.
+
+The rollup does not mark required checks; read them with
+`gh pr checks <number> --repo <slug> --required`. A non-zero exit is data:
+exit 8 means pending; exit 1 means a failure or, with the message
+`no required checks reported`, that the base requires none. Exit 1 with
+`no checks reported` means nothing ran; treat it like the empty rollup. Exit 1
+from an API error is a command failure, not data. A failed non-required check
+is not a hard blocker, but name it in the proposal; `--auto-merge` does not
+skip approval while one fails, and `review-pr` may still block on it.
 
 ## 4. Review feedback
 
@@ -127,11 +143,22 @@ the pull request branch.
 
 ## 7. Propose the merge
 
+Read the allowed merge methods:
+
+```bash
+gh repo view <slug> --json mergeCommitAllowed,squashMergeAllowed,rebaseMergeAllowed
+```
+
+The method is a merge commit, which preserves the branch commits. If
+`mergeCommitAllowed` is false, or instructions set another method, stop and
+ask which allowed method to use; never pick `--squash` or `--rebase` yourself.
+
 ```text
 Merging #42 <title>
 
 Base: development
 Head: feat/cache
+Method: merge commit
 Mergeable: yes
 Checks: passed
 Review: no blocking findings
@@ -150,8 +177,8 @@ state changed since the review or approval, stop and show the new state.
 
 ## 9. Merge
 
-Use the repository's configured merge method; otherwise a merge commit, which
-preserves the branch commits:
+Merge with the method from step 7; replace `--merge` only with the `--squash`
+or `--rebase` the user chose there:
 
 ```bash
 gh pr merge <number> --repo <slug> --merge \
@@ -162,12 +189,13 @@ gh pr merge <number> --repo <slug> --merge \
 GitHub rejects the merge if anything was pushed since. If it does, stop and
 show the new state; never drop `--match-head-commit` or retry automatically.
 
-Never `--squash`, `--rebase`, or force options. Delete the remote head branch
-only for an ordinary same-repository disposable branch the user owns that is
-neither protected nor required to be kept. Leave fork branches, protected or
-long-lived branches, and uncertain ownership intact, and say why.
+Never use force options or `--delete-branch`, which also deletes the local
+branch and switches branches. Delete the remote head branch (step 10) only for
+an ordinary same-repository disposable branch the user owns that is neither
+protected nor required to be kept. Leave fork branches, protected or long-lived
+branches, and uncertain ownership intact, and say why.
 
-## 10. Verify the merge
+## 10. Verify the merge and delete the remote branch
 
 ```bash
 gh pr view <number> --repo <slug> --json \
@@ -176,6 +204,15 @@ gh pr view <number> --repo <slug> --json \
 
 Require `state = MERGED` and record the merge commit. A quiet command is not
 proof of success.
+
+When step 9 allows deleting the remote head branch, check that it still
+exists, since GitHub's auto-delete may already have removed it (exit 2 means
+it is gone), and only then delete it:
+
+```bash
+git -C <dir> ls-remote --exit-code origin refs/heads/<head-branch>
+git -C <dir> push origin --delete refs/heads/<head-branch>
+```
 
 ## 11. Local cleanup
 
@@ -188,12 +225,21 @@ git -C <dir> pull --ff-only origin <base-branch>
 git -C <dir> branch -d <head-branch>
 ```
 
-Delete the local head branch only when it exists and is not checked out in
-another worktree. Use `--ff-only` unless the repository requires otherwise, and
-never create a local merge commit to update the base. Use `-d`, never `-D`; if it refuses,
-stop cleanup and report it. When cleanup is skipped or incomplete, keep
-"PR merged successfully, local cleanup incomplete" distinct from "PR merge
-failed", and name the paths or reason.
+Switch only when the head branch is checked out; skip the switch when the base
+already is. On any other branch, stay there: update an existing local base with
+`git -C <dir> fetch origin <base-branch>:<base-branch>`, which refuses a
+non-fast-forward, and keep the local head branch, since `-d` would test it
+against its upstream or HEAD rather than the base.
+
+Delete the local head branch only when it exists, the base is checked out, and
+it is not checked out in another worktree. After a user-chosen squash or rebase
+merge, delete it only when `git -C <dir> merge-base --is-ancestor <head-branch>
+HEAD` passes, HEAD being the updated base; otherwise keep it and report it.
+Use `--ff-only` unless the repository requires otherwise, and never create a
+local merge commit to update the base. Use `-d`, never `-D`; if it or the
+fetch refuses, stop cleanup and report it. When cleanup is skipped or
+incomplete, keep "PR merged successfully, local cleanup incomplete" distinct
+from "PR merge failed", and name the paths or reason.
 
 ## 12. Report
 
