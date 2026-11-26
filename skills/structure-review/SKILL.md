@@ -1,6 +1,11 @@
 ---
 name: structure-review
-description: Review a repository or scoped area for structural and architectural problems and improvement opportunities. Use repository structure, meaningful Git history, dependency boundaries, and existing architectural decisions to produce an evidence-based Markdown review. Analysis only; never implement changes.
+description: >-
+  Review a repository or scoped area for structural and architectural problems
+  and improvement opportunities. Use repository structure, meaningful Git
+  history, dependency boundaries, and existing architectural decisions to
+  produce an evidence-based Markdown review. Analysis only; never implement
+  changes.
 argument-hint: "[--scope <scope>]"
 ---
 
@@ -43,11 +48,11 @@ and classify the finding conservatively, usually `Worth considering`.
 Every finding needs concrete evidence of friction: one conceptual change
 requiring edits across unrelated modules, dependency cycles, lower layers
 importing higher-level concerns, routinely bypassed package boundaries,
-implementation detail leaking through public APIs, domain rules duplicated across
-boundaries, test setup made hard by coupling, shallow abstractions as complex as
-what they wrap, responsibilities scattered so widely that locality suffers, or
-unnecessary boundaries raising coordination cost. Look explicitly for cycles,
-inverted dependencies, and public modules depending on internals.
+implementation detail leaking through public APIs, domain rules duplicated
+across boundaries, test setup made hard by coupling, shallow abstractions as
+complex as what they wrap, responsibilities scattered so widely that locality
+suffers, or unnecessary boundaries raising coordination cost. Look explicitly
+for cycles, inverted dependencies, and public modules depending on internals.
 
 Size heuristics are not evidence: large files, many dependencies or classes, few
 interfaces, or the absence of a favourite pattern. Judge cohesion, locality,
@@ -56,7 +61,10 @@ coupling, and demonstrated friction, not pattern preference.
 ## Investigation
 
 Use reconnaissance to find distinct structural areas, then give each
-independent area its own sub-agent with only the context it needs:
+independent area its own sub-agent with only the context it needs. Start each
+with an explicit model and effort level that fits its task: higher for areas
+whose findings need deep tracing, lower for simple read-only reconnaissance.
+Each hands off:
 
 ```text
 Area:
@@ -113,7 +121,7 @@ manufacture findings.
 
 Type: Architectural problem | Improvement opportunity
 Confidence: Recommended | Worth considering | Speculation
-Impact: High | Medium | Low
+Impact: High | Medium | Low (only when justified)
 
 <One or two short paragraphs explaining the issue and the decisive evidence.>
 
