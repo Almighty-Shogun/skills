@@ -1,6 +1,10 @@
 ---
 name: source-research
-description: Research technical questions against authoritative external sources using an isolated research sub-agent. Supports --quick and --deep modes, infers the mode when omitted, persists concise source-backed findings to .research/<topic>.md, and never implements changes.
+description: >-
+  Research technical questions against authoritative external sources using an
+  isolated research sub-agent. Supports --quick and --deep modes, infers the
+  mode when omitted, persists concise source-backed findings to
+  .research/<topic>.md, and never implements changes.
 argument-hint: "[--quick | --deep] <research question>"
 ---
 
@@ -30,7 +34,8 @@ sources"); there are no scope flags.
 ## Research agent
 
 Run the research in an isolated sub-agent: it may read a lot, but its handoff
-stays compact.
+stays compact. Start it with an explicit model and effort level that fits the
+mode: lower for `--quick`, higher for `--deep`.
 
 ```text
 Conclusion: <concise answer>
@@ -87,3 +92,8 @@ plans, and fixes are not; those belong to `plan-implementation` or
 
 The only persistent change is the `.research/` file. Leave source and Git state
 alone, and protect unrelated uncommitted work.
+
+## Final summary
+
+The conclusion, the unresolved points, and the `.research/` path, without
+repeating the report.
