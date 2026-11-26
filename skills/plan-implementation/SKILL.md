@@ -86,6 +86,8 @@ excerpts, investigation history, speculative refactors, or vague steps such as
 
 With `--save`, update an existing plan for the same topic rather than
 duplicating it, and never overwrite an unrelated one; persist the plan, not the
-investigation. That file is the only write: leave source, tests, configuration,
-and Git state alone. The plan is for review or later execution, never
-implemented automatically.
+investigation. That file is the only lasting write: leave source, tests,
+configuration, and Git state alone. On every run, track any temporary
+instrumentation or harness created to reproduce a failure, and remove only what
+this run created. The plan is for review or later execution, never implemented
+automatically.
