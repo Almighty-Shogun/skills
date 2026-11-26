@@ -29,8 +29,8 @@ with the standard error body, error code `service_unavailable`, and the window's
 message as the description. A `Retry-After` header in seconds is added whenever
 the window has an end.
 
-A request that accepts `text/html` is redirected to the maintenance path instead,
-when `RedirectBlockedRequests` is on.
+A request that accepts `text/html` is redirected to the maintenance path
+instead, when `RedirectBlockedRequests` is on.
 
 The maintenance path itself answers `503` with the window details
 (`MaintenanceResponse`: message, `StartsAt`, `EndsAt`, `EnabledAt`) while the
@@ -76,10 +76,10 @@ request after the end time clears the state file, using the stored revision so
 two instances cannot both clear it. With the flag off, an expired window keeps
 blocking until something disables it.
 
-**A corrupt state file fails closed.** If `maintenance.json` cannot be parsed the
-package treats the site as enabled with the message "Maintenance file is corrupt,
-please resolve this.", so a bad file takes the site down rather than letting
-traffic through.
+**A corrupt state file fails closed.** If `maintenance.json` cannot be parsed
+the package treats the site as enabled with the message "Maintenance file is
+corrupt, please resolve this.", so a bad file takes the site down rather than
+letting traffic through.
 
 **A file that cannot be read falls back to the last known state**, after three
 attempts with a short delay, and logs a warning.

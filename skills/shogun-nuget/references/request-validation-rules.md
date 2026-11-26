@@ -11,16 +11,18 @@ Message keys resolve through `IMessageResolver`, so every key below needs an
 entry in `messages/{language}/validation.json`. A missing key renders as the key
 itself.
 
-Rules are grouped here by what they do. That grouping is this file's own and does
-not mirror the page split under `docs/asp-net-request-validation/validation-rules/`,
-so do not expect the two to line up section for section.
+Rules are grouped here by what they do. That grouping is this file's own and
+does not mirror the page split under
+`docs/asp-net-request-validation/validation-rules/`, so do not expect the two to
+line up section for section.
 
 ## Reading the tables
 
-- **Field arguments** are a `string` field name on an attribute and an expression
-  on the fluent method: `[Same("Password")]` against `.SameAs(x => x.Password)`.
-- A **sized** key ends in `.string`, `.numeric`, `.array` or `.file`, chosen from
-  what the value is. All four subkeys need a message.
+- **Field arguments** are a `string` field name on an attribute and an
+  expression on the fluent method: `[Same("Password")]` against
+  `.SameAs(x => x.Password)`.
+- A **sized** key ends in `.string`, `.numeric`, `.array` or `.file`, chosen
+  from what the value is. All four subkeys need a message.
 - Most rules **pass on an empty value**; presence rules are what make a field
   mandatory.
 
@@ -40,8 +42,8 @@ declared in.
 
 ## Conditional presence
 
-Each family takes the same shapes. `If` and `Unless` take a field plus the values
-that trigger them; `With` and `WithAll` take one or more other fields;
+Each family takes the same shapes. `If` and `Unless` take a field plus the
+values that trigger them; `With` and `WithAll` take one or more other fields;
 `IfAccepted` and `IfDeclined` take a field holding a boolean-like value.
 
 | Family | Variants | Message keys |
@@ -53,8 +55,8 @@ that trigger them; `With` and `WithAll` take one or more other fields;
 
 ## Sizes
 
-One family, eight modes, measured as string length, numeric magnitude, item count
-or file size in kilobytes.
+One family, eight modes, measured as string length, numeric magnitude, item
+count or file size in kilobytes.
 
 | Rule | Arguments | Message key |
 | --- | --- | --- |

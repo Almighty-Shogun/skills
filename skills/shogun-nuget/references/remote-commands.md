@@ -51,9 +51,9 @@ public sealed class RestartCommand(IWorkerPool pool) : RemoteCommand<RestartMess
 }
 ```
 
-The command resolves from a scope per frame, so scoped dependencies work. Writing
-no response is fine: the listener sends an empty envelope when the handler
-returns without writing.
+The command resolves from a scope per frame, so scoped dependencies work.
+Writing no response is fine: the listener sends an empty envelope when the
+handler returns without writing.
 
 ## Calling a command
 
@@ -86,26 +86,27 @@ The listener answers with a refusal rather than an exception:
 The client turns a refusal into `RemoteCommandRefusedException` carrying the
 `Reason`, an unreachable server into `RemoteCommandUnreachableException` with
 host and port, and a closed connection into
-`RemoteCommandDisconnectedException`, all deriving from `RemoteCommandException`.
+`RemoteCommandDisconnectedException`, all deriving from
+`RemoteCommandException`.
 
 ## Traps
 
-**The whitelist is mandatory in practice.** A connection whose address matches no
-`RemoteServer:Whitelisted` entry is closed without a response, which the client
-reports as `RemoteCommandDisconnectedException`, whose message says the address
-may not be whitelisted. An empty whitelist rejects everyone.
+**The whitelist is mandatory in practice.** A connection whose address matches
+no `RemoteServer:Whitelisted` entry is closed without a response, which the
+client reports as `RemoteCommandDisconnectedException`, whose message says the
+address may not be whitelisted. An empty whitelist rejects everyone.
 
 **Whitelist entries are addresses or CIDR ranges**, and an unparseable entry
 throws when the handler is constructed.
 
-**`RemoteServer:Address` is the bind address**, defaulting to `127.0.0.1`, so the
-listener is loopback only until you change it. It must parse as an IP address,
-not a host name.
+**`RemoteServer:Address` is the bind address**, defaulting to `127.0.0.1`, so
+the listener is loopback only until you change it. It must parse as an IP
+address, not a host name.
 
-**The secret is optional and is a pre-shared key, not a session.** With
-`Secret` unset every whitelisted caller is authorized. It is compared as a
-SHA-256 hash in fixed time, but the wire carries the secret in clear text, so use
-it on a trusted network or behind a tunnel.
+**The secret is optional and is a pre-shared key, not a session.** With `Secret`
+unset every whitelisted caller is authorized. It is compared as a SHA-256 hash
+in fixed time, but the wire carries the secret in clear text, so use it on a
+trusted network or behind a tunnel.
 
 **Command names are matched case-sensitively**, unlike `ConsoleCommands`.
 Duplicates log a warning and the later class never dispatches.
@@ -126,8 +127,8 @@ protocol error, not a refusal.
 **`MaxConcurrentConnections` is a semaphore**, so past the limit new connections
 wait rather than being rejected.
 
-**`StartAsync` twice is refused with an error log**, and on shutdown the listener
-waits at most five seconds for in-flight handlers.
+**`StartAsync` twice is refused with an error log**, and on shutdown the
+listener waits at most five seconds for in-flight handlers.
 
 **A command class must inherit `RemoteCommand<T>`** and carry the attribute;
 either omission throws during registration or handler construction.

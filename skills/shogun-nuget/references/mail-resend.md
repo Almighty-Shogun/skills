@@ -71,12 +71,13 @@ HTML and blank-line separated text, `Buttons` become buttons in HTML and
 
 ## Traps
 
-**Every value is HTML encoded, except `Template:IgnoreText`.** Paragraphs, title,
-greeting, brand name and the `AdditionalValues` entries are encoded on the way
-in, so a template cannot inject markup through them; put markup in the HTML files
-instead. `IgnoreText` is substituted into `{{IgnoreTextHtml}}` as markup so it can
-carry a link, which makes it a configuration value you control, not one to fill
-from user input. The text body strips its tags and decodes the entities.
+**Every value is HTML encoded, except `Template:IgnoreText`.** Paragraphs,
+title, greeting, brand name and the `AdditionalValues` entries are encoded on
+the way in, so a template cannot inject markup through them; put markup in the
+HTML files instead. `IgnoreText` is substituted into `{{IgnoreTextHtml}}` as
+markup so it can carry a link, which makes it a configuration value you control,
+not one to fill from user input. The text body strips its tags and decodes the
+entities.
 
 **URLs must be absolute `http`, `https` or `mailto`.** `MailButton` throws
 `ArgumentException` on anything else, and a `LogoUrl` or `AppUrl` that fails the
@@ -85,26 +86,26 @@ same check is replaced with an empty string rather than rendered.
 **Templates are cached in memory after the first read.** Editing an HTML file at
 runtime changes nothing until the process restarts.
 
-**A template name that escapes the `mail` directory throws.** The loader resolves
-the path and rejects anything outside the root.
+**A template name that escapes the `mail` directory throws.** The loader
+resolves the path and rejects anything outside the root.
 
 **Sending never throws for a Resend failure.** `SendAsync` returns
-`MailSendResult.Failure(message)` and logs; only a cancellation propagates. Check
-`IsSuccess`.
+`MailSendResult.Failure(message)` and logs; only a cancellation propagates.
+Check `IsSuccess`.
 
 **An empty `To` is a failure result, not an exception**, with the message "No
 recipient was supplied."
 
-**An idempotency key is generated per send** when `MailOptions.IdempotencyKey` is
-null, using a version 7 GUID, so a retry that reuses the same `MailOptions`
+**An idempotency key is generated per send** when `MailOptions.IdempotencyKey`
+is null, using a version 7 GUID, so a retry that reuses the same `MailOptions`
 instance is only deduplicated if you set the key yourself.
 
 **`From` is composed from configuration**, as `FromName <FromEmail>` when a name
 is set and the bare address otherwise.
 
 **`{app_name}` and `{app_url}` are substituted in the three template settings
-only**, case-insensitively, and `{app_url}` becomes empty when `AppUrl` fails the
-URL check.
+only**, case-insensitively, and `{app_url}` becomes empty when `AppUrl` fails
+the URL check.
 
 **`Email:Links` is bound but not rendered by the base template**, so it is
 available to your own placeholder handling and nothing else.

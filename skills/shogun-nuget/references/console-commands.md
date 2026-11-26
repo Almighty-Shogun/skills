@@ -69,8 +69,8 @@ not run.
 explicitly when commands live elsewhere.
 
 **Registration and dispatch are separate calls.** `AddConsoleCommands` adds the
-handler, `RegisterConsoleCommands` adds the commands; the loop dispatches nothing
-without the second.
+handler, `RegisterConsoleCommands` adds the commands; the loop dispatches
+nothing without the second.
 
 **Names and aliases are matched case-insensitively, first registration wins.** A
 duplicate logs a warning and the later class is never reachable under that name.

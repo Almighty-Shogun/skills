@@ -1,11 +1,13 @@
 # AlmightyShogun.AspNet.RequestValidation
 
-Request models validated through attributes, fluent rules, or both. Every failure
-on a request is collected and returned as one `422` with localized messages.
+Request models validated through attributes, fluent rules, or both. Every
+failure on a request is collected and returned as one `422` with localized
+messages.
 
 Docs: https://nuget.docs.shogun.ms/asp-net-request-validation/
 
-Depends on `AlmightyShogun.AspNet.Core` and `AlmightyShogun.AspNet.Localization`.
+Depends on `AlmightyShogun.AspNet.Core` and
+`AlmightyShogun.AspNet.Localization`.
 
 For the rule catalogue, attribute by attribute with its fluent equivalent and
 message key, read `request-validation-rules.md`.
@@ -37,9 +39,9 @@ message key, read `request-validation-rules.md`.
 ```
 
 `ValidationErrorResponse` extends `HttpErrorResponse` from `AspNet.Core`, so the
-envelope matches every other error. Per field, `code` is a stable numeric hash of
-the message key, `error` is the key snake_cased, and `errorDescription` is the
-resolved message.
+envelope matches every other error. Per field, `code` is a stable numeric hash
+of the message key, `error` is the key snake_cased, and `errorDescription` is
+the resolved message.
 
 Field names are camelCase, taken from `[JsonPropertyName]` when present.
 **Only the first failure per field is reported**, and once a field has an error
@@ -84,8 +86,9 @@ public sealed record SignupRequest
 ```
 
 The attributes live in this package's namespace, not
-`System.ComponentModel.DataAnnotations`. A `using AlmightyShogun.AspNet.RequestValidation;`
-changes what `[Required]` means in that file.
+`System.ComponentModel.DataAnnotations`. A
+`using AlmightyShogun.AspNet.RequestValidation;` changes what `[Required]` means
+in that file.
 
 ### Fluent rules
 
@@ -121,9 +124,10 @@ public sealed class UniqueEmailRule(AppDbContext database) : ICustomValidationRu
 }
 ```
 
-Attach it with `[CustomRule<UniqueEmailRule>]` or `.CustomRule<UniqueEmailRule>()`.
-The rule is resolved from the request's service provider, so it can take scoped
-dependencies even though the validator itself cannot.
+Attach it with `[CustomRule<UniqueEmailRule>]` or
+`.CustomRule<UniqueEmailRule>()`. The rule is resolved from the request's
+service provider, so it can take scoped dependencies even though the validator
+itself cannot.
 
 ## Traps
 
@@ -149,15 +153,15 @@ builder extension of the same name: the middleware turns a malformed request
 body into the package's error body.
 
 **Rules run in priority order, presence first**, and a field stops at its first
-failure. Ordering attributes on the property does not change which message a user
-sees.
+failure. Ordering attributes on the property does not change which message a
+user sees.
 
 **Only the first error per field reaches the response**, even though a field can
 collect several internally.
 
-**A validator taking constructor dependencies fails at startup**, by design: rules
-are declared once, outside any request scope. Dependencies belong in a custom
-rule.
+**A validator taking constructor dependencies fails at startup**, by design:
+rules are declared once, outside any request scope. Dependencies belong in a
+custom rule.
 
 **Two validators for one request type fail at startup** with a message naming
 both.
@@ -169,8 +173,9 @@ Registration: `AddAspNetValidation()`, `AddAspNetValidation(Assembly[])` on
 `RouteHandlerBuilder` and `RouteGroupBuilder`.
 
 Authoring: `Validator<TRequest>` with `Rules()` and `RuleFor(expression)`,
-`RuleBuilder<TRequest, TProperty>`, `ICustomValidationRule<TRequest, TProperty>`,
-`ValidationRuleResult.Success()`, `ValidationRuleResult.Failure(key, parameters)`.
+`RuleBuilder<TRequest, TProperty>`,
+`ICustomValidationRule<TRequest, TProperty>`, `ValidationRuleResult.Success()`,
+`ValidationRuleResult.Failure(key, parameters)`.
 
 Responses: `ValidationErrorResponse` (`Errors`), `ValidationRuleError` (`Code`,
 `Error`, `ErrorDescription`), `ValidationErrorResult.Create(...)`.

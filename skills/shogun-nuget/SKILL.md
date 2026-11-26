@@ -1,14 +1,14 @@
 ---
 name: shogun-nuget
 description: >-
-  Use when work materially depends on an AlmightyShogun.* NuGet package: using or
-  changing one of its APIs, deciding which package owns a concern, wiring the
+  Use when work materially depends on an AlmightyShogun.* NuGet package: using
+  or changing one of its APIs, deciding which package owns a concern, wiring the
   ASP.NET packages together, or resolving the installed contract. Covers Utils,
   AspNet.Core, AspNet.Localization, AspNet.Auth, AspNet.Auth.Credentials,
   AspNet.RequestValidation, AspNet.MaintenanceMode, ConsoleCommands,
   RemoteCommands, Hangfire.RecurringJobs, Hosting.ConsoleLifetime, Mail.Resend,
-  Serilog and EntityFrameworkCore.ModelBuilding. Do not trigger merely because an
-  unrelated AlmightyShogun using directive appears in a file. NOT for the
+  Serilog and EntityFrameworkCore.ModelBuilding. Do not trigger merely because
+  an unrelated AlmightyShogun using directive appears in a file. NOT for the
   @almighty-shogun npm or Maven packages.
 argument-hint: "[package] <what you want>"
 license: MIT (skill content); the AlmightyShogun.* NuGet packages are MIT, by Shogun
@@ -46,7 +46,7 @@ prefix is dropped below.
 
 Docs: https://nuget.docs.shogun.ms
 
-Source of truth: `~/Development/nuget-packages`
+Package source, when checked out locally: the `nuget-packages` monorepo.
 
 Do not guess package ownership when the source or an installed assembly can be
 checked.
@@ -96,7 +96,7 @@ See `references/asp-net-core.md` for the full pipeline and middleware order.
 ## Installed contract wins
 
 The restored package version is the contract that consuming code must compile
-against, not the current monorepo source.
+against, not the head of the `nuget-packages` checkout.
 
 Resolve it from repository evidence: `PackageReference` entries in the project
 file, `Directory.Packages.props` when `ManagePackageVersionsCentrally` is true,
@@ -113,8 +113,8 @@ Priority: the installed package and restored assets, then the monorepo source at
 the matching tag, then the matching bundled reference guide, then the
 documentation site.
 
-If a guide and the installed contract disagree, follow the installed contract and
-mention the mismatch when it materially affects the answer or the change.
+If a guide and the installed contract disagree, follow the installed contract
+and mention the mismatch when it materially affects the answer or the change.
 
 ## Legacy package ids
 
@@ -137,10 +137,8 @@ predates the rename:
 
 A rename is not an API-compatibility claim, and the split of `AspNet.Utils` into
 `AspNet.Core` and `AspNet.Localization` moved and reshaped types rather than
-copying them. When a project references a legacy id, verify against that package,
-not against the reference guides here.
-
-Delete this section once no project you work on references a legacy id.
+copying them. When a project references a legacy id, verify against that
+package, not against the reference guides here.
 
 ## Host repository conventions win
 
@@ -150,16 +148,18 @@ over development conventions from the `AlmightyShogun.*` package repository.
 
 ## Working inside the package monorepo
 
-When the task edits `~/Development/nuget-packages` itself rather than a consumer,
+When the task edits the `nuget-packages` monorepo itself rather than a consumer,
 that repository's own `CLAUDE.md` and `docs/CLAUDE.md` govern, and they are
 stricter than this skill:
 
 - Every member carries an XML documentation block in the compact `csharp-docs`
-  style, checked by the build with `GenerateDocumentationFile` on and no `NoWarn`.
+  style, checked by the build with `GenerateDocumentationFile` on and no
+  `NoWarn`.
 - `max_line_length` is 140 columns, counting the `///` prefix.
 - `<since>` records when a member was added, never when it changed. A new member
   gets `<since>Unreleased</since>` until the release process replaces it.
-- Documentation pages under `docs/` are written by hand after reading the source.
+- Documentation pages under `docs/` are written by hand after reading the
+  source.
 - Packages are versioned together, and CI publishes on a GitHub release.
 
 Use the `csharp-docs` skill for documentation work there. Do not change code to
@@ -202,10 +202,12 @@ Do not install dependencies unasked.
 
 ## Configuration changes
 
-Every configurable package binds one `appsettings.json` section through
-`AddConfiguration`, which turns on data-annotation validation and validation on
-start, so a missing or invalid section fails at startup rather than at first use.
-`references/configuration.md` lists every section, key and default.
+Every package with a settings record binds one `appsettings.json` section
+through `AddConfiguration`, which turns on data-annotation validation and
+validation on start, so a missing or invalid section fails at startup rather
+than at first use. The exceptions are CORS (`AddCorsPolicy`) and Serilog
+(`ReadFrom.Configuration`), which read their sections directly, without startup
+validation. `references/configuration.md` lists every section, key and default.
 
 Do not change runtime, build or hosting configuration merely to make a package
 convenient. When a consequential change is genuinely required, explain why, show
@@ -226,13 +228,14 @@ bloating this skill.
 
 ## Verification
 
-Use the host project's real validation commands, discovered from the solution and
-project files, CI configuration or repository instructions. Inside the package
-monorepo the checks are:
+Use the host project's real validation commands, discovered from the solution
+and project files, CI configuration or repository instructions. Inside the
+package monorepo the checks are:
 
 ```sh
 dotnet build packages/<Package>/<Package>.csproj --no-incremental
-awk 'length($0)>140 {print FILENAME":"FNR}' packages/<Package>/*.cs
+find packages/<Package> -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' \
+  -exec awk 'length($0)>140 {print FILENAME":"FNR}' {} +
 dotnet build packages.sln
 bun run docs:build
 ```
@@ -243,11 +246,12 @@ Passing checks do not justify ignoring a clear package-contract mismatch.
 ## Scope
 
 This is an implementation and reference skill, not a Git workflow: the global
-instructions on Git and outward-facing actions apply unchanged, and completed Git
-work goes to the `commit` skill. The worktree may be dirty, so protect existing
-user changes.
+instructions on Git and outward-facing actions apply unchanged, and completed
+Git work goes to the `commit` skill. The worktree may be dirty, so protect
+existing user changes.
 
-Keep context small. Load one package guide, use `references/request-validation-rules.md`
-only for an exact rule lookup, inspect installed assemblies or monorepo source
-directly rather than pasting them into parent context, and do not enumerate a
-package's whole API to answer a one-symbol question.
+Keep context small. Load one package guide, use
+`references/request-validation-rules.md` only for an exact rule lookup, inspect
+installed assemblies or monorepo source directly rather than pasting them into
+parent context, and do not enumerate a package's whole API to answer a
+one-symbol question.

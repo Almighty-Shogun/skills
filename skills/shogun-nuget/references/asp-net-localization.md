@@ -53,8 +53,8 @@ app.UseMessageLocalization();
 ```
 
 Binds the `Localization` section, adds `IHttpContextAccessor`, and registers
-`ILanguageProvider` and `IMessageResolver` with `TryAdd`, so registering your own
-before this call keeps it.
+`ILanguageProvider` and `IMessageResolver` with `TryAdd`, so registering your
+own before this call keeps it.
 
 ### Resolve a message with parameters
 
@@ -77,14 +77,14 @@ falls back to `Localization:DefaultLanguage`.
 
 ## Traps
 
-**A missing key returns the key itself** and logs a warning. Nothing throws, so a
-typo ships as a response body reading `auth.locked-out`.
+**A missing key returns the key itself** and logs a warning. Nothing throws, so
+a typo ships as a response body reading `auth.locked-out`.
 
 **`ResolveLanguage` picks the first candidate that has any message at all.** The
 candidates are the request's accepted languages, each one's shortened fallbacks
 (`nl-BE` then `nl`), then the default. A language whose directory exists but is
-empty is skipped, and a language with one unrelated message wins for keys it does
-not contain.
+empty is skipped, and a language with one unrelated message wins for keys it
+does not contain.
 
 **Language tags are validated against `^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$`.**
 A malformed tag is ignored with a warning and yields no messages.
@@ -93,12 +93,12 @@ A malformed tag is ignored with a warning and yields no messages.
 `Localization:AutomaticReload` is true does the package watch the message
 directories. With it off, editing a file at runtime changes nothing.
 
-**Watching starts on the first `GetMessages` call**, not at startup, and only for
-directories that exist at that moment. A `messages` directory created later is
-not watched.
+**Watching starts on the first `GetMessages` call**, not at startup, and only
+for directories that exist at that moment. A `messages` directory created later
+is not watched.
 
-**Unreadable or malformed message files are skipped with a warning**, so a broken
-JSON file silently reduces the set of keys.
+**Unreadable or malformed message files are skipped with a warning**, so a
+broken JSON file silently reduces the set of keys.
 
 **`TrySetContentLanguage` returns false rather than throwing** when the response
 has started, the value is blank, or it contains a control character. The

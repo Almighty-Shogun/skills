@@ -36,14 +36,14 @@ builder.Services
 ```
 
 `AddCustomHangfire()` with no argument uses in-memory storage at compatibility
-level 180, which loses every job on restart; pass a configuration action for real
-storage. Both overloads set the simple assembly name type serializer and the
-recommended serializer settings, and add a Hangfire server unless
+level 180, which loses every job on restart; pass a configuration action for
+real storage. Both overloads set the simple assembly name type serializer and
+the recommended serializer settings, and add a Hangfire server unless
 `addServer: false`.
 
 `RegisterRecurringJobs` registers each job type as scoped, binds the
-`RecurringJobs` section when a configuration is passed, and adds a hosted service
-that calls `AddOrUpdate` for every enabled job at startup.
+`RecurringJobs` section when a configuration is passed, and adds a hosted
+service that calls `AddOrUpdate` for every enabled job at startup.
 
 ## Overrides
 
@@ -74,8 +74,8 @@ renamed job leaves a stale override behind and the host tells you.
 but never scheduled.** The type registration scans for the interface; scheduling
 requires the attribute.
 
-**`RunAsync` must be public**, so implement the interface implicitly. An explicit
-implementation is not found and throws when the schedule is built.
+**`RunAsync` must be public**, so implement the interface implicitly. An
+explicit implementation is not found and throws when the schedule is built.
 
 **Cron expressions are validated by Cronos**, and the default parser is five
 fields (minute precision). `CronSchedules` provides `Minutely`, `Hourly`,

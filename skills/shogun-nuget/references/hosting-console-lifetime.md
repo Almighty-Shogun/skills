@@ -35,8 +35,8 @@ is left alone, so stopping from the IDE still works.
 ## Traps
 
 **Ctrl+C does nothing in production by design.** Stop the process with SIGTERM,
-or from inside the application through `IHostApplicationLifetime.StopApplication`
-or a command. Nothing else stops it.
+or from inside the application through
+`IHostApplicationLifetime.StopApplication` or a command. Nothing else stops it.
 
 **Windows gets no SIGTERM registration**, so the host relies on the normal
 Windows shutdown path there.

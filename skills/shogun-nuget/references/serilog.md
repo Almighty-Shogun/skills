@@ -22,8 +22,8 @@ settings package. It references no other package in this scope.
 builder.Services.AddCustomLogging(builder.Configuration);
 ```
 
-The logger is built with `Enrich.FromLogContext()`, an async-wrapped console sink
-using the package formatter, and then, when a configuration is passed,
+The logger is built with `Enrich.FromLogContext()`, an async-wrapped console
+sink using the package formatter, and then, when a configuration is passed,
 `ReadFrom.Configuration`, so a `Serilog` section can add sinks and set levels.
 The `IServiceCollection` overload registers it through `AddSerilog`; the
 `IHostBuilder` overload through `UseSerilog`. Both hand ownership of the logger
@@ -32,8 +32,8 @@ to the host, so it is disposed with it.
 ## Output
 
 Each line is `[HH:mm:ss LVL] message`, where the prefix is colored by level:
-information green, warning yellow, error red, fatal bright red, verbose and debug
-white. An exception is appended on its own line in dark gray.
+information green, warning yellow, error red, fatal bright red, verbose and
+debug white. An exception is appended on its own line in dark gray.
 
 Rendered properties are colored by type: strings white, integers and reals cyan,
 booleans magenta, null dark gray, anything else white.
@@ -75,5 +75,6 @@ reuse in a custom sink configuration.
 
 ## Public surface
 
-`AddCustomLogging(IConfiguration? configuration = null, bool includeConsoleSink =
-true, bool? enableColors = null)` on `IServiceCollection` and on `IHostBuilder`.
+`AddCustomLogging(IConfiguration? configuration = null, bool
+includeConsoleSink = true, bool? enableColors = null)` on `IServiceCollection`
+and on `IHostBuilder`.

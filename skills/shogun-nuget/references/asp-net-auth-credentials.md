@@ -8,8 +8,8 @@ lockout, and TOTP two-factor with recovery codes. Storage is EF Core.
 Docs: https://nuget.docs.shogun.ms/asp-net-auth-credentials/
 
 Depends on `AlmightyShogun.Utils`, `AspNet.Core`, `AspNet.Auth`,
-`AspNet.Localization`, `AspNet.RequestValidation`, EF Core (core and relational),
-and `Otp.NET`. It supplies no EF Core provider and no migrations.
+`AspNet.Localization`, `AspNet.RequestValidation`, EF Core (core and
+relational), and `Otp.NET`. It supplies no EF Core provider and no migrations.
 
 ## What is where
 
@@ -183,9 +183,9 @@ IReadOnlyList<string> recoveryCodes = await twoFactorService.CompleteEnrolmentAs
 // show recoveryCodes once
 ```
 
-`CompleteEnrolmentAsync` replaces any existing recovery codes and returns the new
-ones in the clear; only their hashes are stored. The pending secret expires after
-`AuthCredentials:TwoFactor:PendingSecretMinutes`.
+`CompleteEnrolmentAsync` replaces any existing recovery codes and returns the
+new ones in the clear; only their hashes are stored. The pending secret expires
+after `AuthCredentials:TwoFactor:PendingSecretMinutes`.
 
 ## Traps
 
@@ -198,13 +198,13 @@ restarts or shared across instances make every stored secret undecryptable.
 `RequiresTwoFactor` before touching `Session`, and give the client a route that
 calls `CompleteTwoFactorLoginAsync` with the challenge and the code.
 
-**Lockout is off by default** (`AuthCredentials:Lockout:Enabled`). When it is on,
-the failed-attempt counter is claimed **before** the password is verified, and
-`VerifyAsync` claims against the same budget, so a two-factor attempt counts.
-Login releases its own claim when it hands out a challenge, so the two steps of
-one login spend one attempt rather than two. A successful login or verification
-clears the counter; a request that throws after the claim and before the release
-still counted. `AccountLockedException` carries `LockoutEnd`.
+**Lockout is off by default** (`AuthCredentials:Lockout:Enabled`). When it is
+on, the failed-attempt counter is claimed **before** the password is verified,
+and `VerifyAsync` claims against the same budget, so a two-factor attempt
+counts. Login releases its own claim when it hands out a challenge, so the two
+steps of one login spend one attempt rather than two. A successful login or
+verification clears the counter; a request that throws after the claim and
+before the release still counted. `AccountLockedException` carries `LockoutEnd`.
 
 **`CreateUserAsync` and `RegisterAsync` check username and email uniqueness with
 a read before writing**, which is a race under concurrency; the unique indexes

@@ -6,8 +6,8 @@ no registration: every helper returns the `ModelBuilder` so calls chain.
 
 Docs: https://nuget.docs.shogun.ms/ef-core-model-building/
 
-Depends only on EF Core and EF Core relational. It references no other package in
-this scope.
+Depends only on EF Core and EF Core relational. It references no other package
+in this scope.
 
 ## What is where
 
@@ -41,8 +41,8 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 Each relationship helper has a second overload taking a principal key expression
 as a fourth argument, for a relationship that does not point at the primary key.
-On that overload the inverse navigation is a positional parameter, so pass `null`
-explicitly when there is none.
+On that overload the inverse navigation is a positional parameter, so pass
+`null` explicitly when there is none.
 
 ## Traps
 

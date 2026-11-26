@@ -56,9 +56,9 @@ app.UseMessageLocalization();
 ```
 
 `AddExceptionHandling` registers two handlers: one that answers
-`BadHttpRequestException` and turns a client-aborted request into status 499, and
-one that answers everything else with a 500 body. Handlers run in registration
-order, so anything registered after this call never runs.
+`BadHttpRequestException` and turns a client-aborted request into status 499,
+and one that answers everything else with a 500 body. Handlers run in
+registration order, so anything registered after this call never runs.
 
 `UseHttpErrorResponses` installs an exception handler that does nothing, so the
 registered `IExceptionHandler` chain owns the response, then a status-code-pages
@@ -109,9 +109,9 @@ at the top level.
 builder.Services.AddCloudflareHeaders();
 ```
 
-Configures `ForwardedHeadersOptions` to read `CF-Connecting-IP`, clears the known
-proxies and networks, and adds Cloudflare's published ranges. You still have to
-call `app.UseForwardedHeaders()`; this only configures the options.
+Configures `ForwardedHeadersOptions` to read `CF-Connecting-IP`, clears the
+known proxies and networks, and adds Cloudflare's published ranges. You still
+have to call `app.UseForwardedHeaders()`; this only configures the options.
 
 ## Traps
 

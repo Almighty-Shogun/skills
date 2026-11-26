@@ -51,9 +51,9 @@ builder.Services.RegisterOnInherit<IJob>(
 ```
 
 `registerAsBaseType: true`, the default, registers every implementation under
-`IJob`, so `IEnumerable<IJob>` resolves them all. `false` registers each concrete
-type under itself, which is what you want when a consumer resolves a specific
-command or job type. An optional `filter` narrows the set further.
+`IJob`, so `IEnumerable<IJob>` resolves them all. `false` registers each
+concrete type under itself, which is what you want when a consumer resolves a
+specific command or job type. An optional `filter` narrows the set further.
 
 ### Group a feature's registrations
 
@@ -110,12 +110,13 @@ only honored on the type itself, not on a base type.
 `ReflectionTypeLoadException` and returns the types that did load, so a broken
 dependency shows up as a missing registration rather than an exception.
 
-**`TryDeserialize` returns `false` for the JSON literal `null`.** It only catches
-`JsonException`, so it reports failure for malformed JSON and for a payload that
-deserializes to null, and lets anything else propagate.
+**`TryDeserialize` returns `false` for the JSON literal `null`.** It only
+catches `JsonException`, so it reports failure for malformed JSON and for a
+payload that deserializes to null, and lets anything else propagate.
 
 **`ReplaceService` defaults to `ServiceLifetime.Singleton`** and replaces only
-the first matching descriptor, following `ServiceCollectionDescriptorExtensions.Replace`.
+the first matching descriptor, following
+`ServiceCollectionDescriptorExtensions.Replace`.
 
 **`ConsoleUtils.RemoveLastLine` is silent when output is redirected**, and
 swallows the cursor exceptions a non-interactive console throws.

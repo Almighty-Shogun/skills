@@ -27,7 +27,8 @@ passwords; that is `AlmightyShogun.AspNet.Auth.Credentials`.
 
 ## Apps and audiences
 
-Every token carries an audience and the audience is always validated. Two shapes:
+Every token carries an audience and the audience is always validated. Two
+shapes:
 
 - **single app**: set `Auth:DefaultApp`, leave `Auth:Hosts` empty. Every token
   gets that audience and no host lookup happens;
@@ -53,9 +54,9 @@ entirely; standard audience validation against `ValidAudiences` runs either way.
 `permission:users.read`. A custom policy provider builds that policy on demand,
 requiring an authenticated user plus the permission.
 
-A granted permission satisfies a required one when it matches case-insensitively,
-or when it ends in `.*` and the required permission starts with the same prefix,
-so `users.*` grants `users.read`.
+A granted permission satisfies a required one when it matches
+case-insensitively, or when it ends in `.*` and the required permission starts
+with the same prefix, so `users.*` grants `users.read`.
 
 Permission claims are read from the `permission` claim type; the user id from
 `userId`, falling back to `ClaimTypes.NameIdentifier`.
@@ -102,10 +103,10 @@ host at startup with an explicit message.
 
 **A scoped setup rejects an unmapped host.** `IAppHostResolver.Resolve()` throws
 `UnknownAppException` when `Hosts` is non-empty and the request host matches
-nothing, including `localhost` when `LocalhostApp` is unset. The token-validation
-check calls `TryResolveAppFromHost` instead, so an unmapped host on a request
-carrying a token fails authentication with a 401 rather than raising that
-exception.
+nothing, including `localhost` when `LocalhostApp` is unset. The
+token-validation check calls `TryResolveAppFromHost` instead, so an unmapped
+host on a request carrying a token fails authentication with a 401 rather than
+raising that exception.
 
 **`TryResolve` returns true with a null app in the unscoped case.** True means
 "resolution succeeded", not "an app was found", so check the out parameter.
@@ -121,9 +122,9 @@ extensions on `ClaimsPrincipal`, so they work on `User` in a controller.
 absent cookie; use the `Try` variant on paths where absence is normal.
 
 **The three exceptions map to fixed responses.** `MissingUserIdClaimException`
-and `MissingRefreshTokenException` become 401, `UnknownAppException` becomes 403,
-each with a message key under `auth.*`. The mapper is internal, so a different
-status means writing your own handler ahead of this one.
+and `MissingRefreshTokenException` become 401, `UnknownAppException` becomes
+403, each with a message key under `auth.*`. The mapper is internal, so a
+different status means writing your own handler ahead of this one.
 
 **A permission wildcard only matches a `.` boundary as written.** The check
 strips the final `*` and compares the prefix, so `users.*` also matches

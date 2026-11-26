@@ -1,17 +1,18 @@
 # Configuration sections
 
-Every configurable package binds one `appsettings.json` section through
-`AddConfiguration` from `AlmightyShogun.Utils`, which turns on data-annotation
-validation and validation on start. A missing required key or an out-of-range
+Every package with a settings record binds one `appsettings.json` section
+through `AddConfiguration` from `AlmightyShogun.Utils`, which turns on
+data-annotation validation and validation on start. CORS and Serilog are the
+exceptions; see their sections below. A missing required key or an out-of-range
 value therefore **fails the host at startup**, not at first use.
 
 Defaults below are the property initializers in the settings records. A key you
 do not write takes the default; a key you write as `null` may fail validation.
 
-This file is the source of truth for sections, keys and defaults. Each package
-reference ends with a one-line `Configuration:` pointer naming its settings type;
-when the two disagree, the settings record in the source decides, and this file
-is what gets corrected.
+This file is the source of truth for sections, keys and defaults. Each reference
+for a package with a settings record ends with a one-line `Configuration:`
+pointer naming its settings type; when the two disagree, the settings record in
+the source decides, and this file is what gets corrected.
 
 ## Localization
 
@@ -238,8 +239,8 @@ Credentials are always allowed, an empty header or method list means any, and
 
 ## Serilog
 
-`AddCustomLogging(configuration)` calls `ReadFrom.Configuration`, so the standard
-Serilog section applies:
+`AddCustomLogging(configuration)` calls `ReadFrom.Configuration`, so the
+standard Serilog section applies:
 
 ```json
 {
