@@ -1,6 +1,11 @@
 ---
 name: respond-pr
-description: Process reviewer feedback on a pull request. Resolve the target PR, surface only unresolved actionable feedback, let the user choose what to address, delegate independent changes to isolated sub-agents, validate the resulting diff, and require approval before posting replies or resolving GitHub threads.
+description: >-
+  Process reviewer feedback on a pull request. Resolve the target PR, surface
+  only unresolved actionable feedback, let the user choose what to address,
+  delegate independent changes to isolated sub-agents, validate the resulting
+  diff, and require approval before posting replies or resolving GitHub
+  threads.
 argument-hint: "[<number-or-url>]"
 ---
 
@@ -46,6 +51,25 @@ comments that clearly request a change. Skip resolved threads, bare approvals,
 bot chatter, CI notifications, and conversation, reading them only to
 understand an unresolved item.
 
+No `gh` subcommand exposes thread state, so read threads through GraphQL
+(`<owner>` and `<name>` from `<slug>`); PR-level comments and review bodies
+come from `gh pr view <number> --repo <slug> --json comments,reviews`:
+
+```bash
+gh api graphql --paginate -f owner=<owner> -f name=<name> -F number=<number> \
+  -f query='
+  query($owner: String!, $name: String!, $number: Int!, $endCursor: String) {
+    repository(owner: $owner, name: $name) { pullRequest(number: $number) {
+      reviewThreads(first: 100, after: $endCursor) {
+        pageInfo { hasNextPage endCursor }
+        nodes { id isResolved path line
+          comments(first: 50) { nodes { databaseId author { login } body } } } }
+    } } }'
+```
+
+Comments past the first 50 in a thread are not needed to reply to or resolve
+it; the thread `id` and its opening comments carry the request.
+
 Classify each item as actionable, suggestion, question, incorrect or
 incompatible, or already addressed. Group comments that ask for the same
 underlying change, keeping each original thread reference so replies and
@@ -90,7 +114,11 @@ Give each independent selected item its own implementation sub-agent, and one
 sub-agent per group of related comments, with only the selected request, its
 thread context, the surrounding code, and the repository constraints. Changes
 stay within the selected scope, follow conventions, avoid unrelated refactors,
-and keep public contracts unless the request explicitly changes them.
+and keep public contracts unless the request explicitly changes them. The
+sub-agents share the working tree, so run them one after another unless their
+file sets are disjoint. Start each sub-agent with an explicit model and effort
+level that fits its task: highest for implementation, fix, and validation,
+lower for simple read-only research.
 
 ```text
 Status: Applied | Not applied | Already addressed
@@ -135,10 +163,18 @@ check with `git -C <dir> merge-base --is-ancestor <commit> <headRefOid>`; until
 it passes, say it is waiting on the push. Replies that claim no change, such as
 answers and declined requests, do not wait.
 
+Post a thread reply with the GraphQL `addPullRequestReviewThreadReply` mutation
+(`pullRequestReviewThreadId` is the thread `id`), or with
+`gh api repos/<slug>/pulls/<number>/comments/<comment-id>/replies -F
+body=@<body-file>` (`<comment-id>` is the first comment's `databaseId`). Post a
+PR-level reply with `gh pr comment <number> --repo <slug> --body-file
+<body-file>`. Keep `<body-file>` in the scratchpad or temp directory.
+
 Resolving a thread is a separate approval: offer it once a request has been
 addressed or validly declined, validated where code changed, and replied to
 where appropriate. A thread resolved by a change also waits until the PR's
-`headRefOid` contains it. Never mark feedback resolved silently.
+`headRefOid` contains it. Resolve with the GraphQL `resolveReviewThread`
+mutation (`threadId` is the thread `id`). Never mark feedback resolved silently.
 
 ## Final summary
 
