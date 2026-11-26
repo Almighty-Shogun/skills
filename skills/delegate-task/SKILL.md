@@ -61,7 +61,8 @@ substantial external research is `source-research`, investigating current
 behavior is `repository-research`, and planning is `plan-implementation`
 (`.plan-implementation/`). When the user asks to implement an artifact from one
 of those, treat it as input: confirm it still applies, then do not repeat its
-analysis. A saved plan lets research be skipped, but still needs confirming.
+analysis. A saved plan lets research be skipped, but is still checked against
+the current code.
 
 ## Research
 
@@ -140,6 +141,7 @@ implementation.
 
 ## Output
 
-Interactive: the Research Handoff for approval, then the implementation result
-and the validation result. Autonomous: the implementation result, checks run,
+Interactive: the Research Handoff for approval (or, when research is skipped,
+the Task Contract plus the intended files), then the implementation result and
+the validation result. Autonomous: the implementation result, checks run,
 validation result, and any remaining blockers. Never expose agent transcripts.
