@@ -92,7 +92,8 @@ Use authoritative evidence when framework, protocol, or specification behavior
 affects the design, through `source-research` for anything substantial. Use
 sub-agents only for genuinely independent boundaries, such as an HTTP contract
 alongside an SDK surface, each started with an explicit model and effort level
-that fits its task.
+that fits its task: higher for boundaries that need deep tracing or carry
+compatibility risk, lower for simple single-surface designs.
 
 ## Artifact
 
