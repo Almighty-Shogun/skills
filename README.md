@@ -25,7 +25,7 @@ Twenty-one skills, grouped by what they are for.
 
 | Skill | Invocation | What it does |
 |---|---|---|
-| [**commit**](skills/commit/SKILL.md) | `/commit [--auto-commit] [--auto-push] [--auto-all] [<dir> [<path>...]]` | Turns a mixed working tree into small commits grouped by intent, proposes the plan, stages narrowly, never amends or force-pushes. |
+| [**commit**](skills/commit/SKILL.md) | `/commit [--auto-commit] [--auto-push] [--auto-all] [--dir <dir>] [<path>...]` | Turns a mixed working tree into small commits grouped by intent, proposes the plan, stages narrowly, never amends or force-pushes. |
 | [**create-pr**](skills/create-pr/SKILL.md) | `/create-pr [<fix\|feat\|improvement\|chore\|docs>/<slug>]` | Opens a pull request on a new or existing work branch, inferring the branch name from the actual change. |
 | [**review-pr**](skills/review-pr/SKILL.md) | `/review-pr [<number-or-url>] [--comment] [--no-build]` | Reviews a pull request for bugs and drift from the repository's own instructions, and reports findings without changing anything. |
 | [**respond-pr**](skills/respond-pr/SKILL.md) | `/respond-pr [<number-or-url>]` | Surfaces unresolved reviewer feedback, lets you choose what to address, and answers it. |

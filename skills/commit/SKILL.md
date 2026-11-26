@@ -6,7 +6,7 @@ description: >-
   committing, and ask before pushing. Uses feat, fix, improvement, chore, and
   docs types by default. Never rewrites history or creates release commits,
   except a release-metadata commit the release skill requests.
-argument-hint: "[--auto-commit] [--auto-push] [--auto-all] [<dir> [<path>...]]"
+argument-hint: "[--auto-commit] [--auto-push] [--auto-all] [--dir <dir>] [<path>...]"
 ---
 
 # Commit
@@ -30,16 +30,19 @@ report the operation instead of working around it.
 - `--auto-commit` skips confirmation before committing.
 - `--auto-push` skips confirmation before pushing.
 - `--auto-all` skips both.
+- `--dir <dir>` names the repository root; the default is the current
+  repository.
+- Positional arguments are always paths inside that repository, never a root.
 
-The flags skip confirmation only, never inspection, grouping, safety checks, or
-validation.
+The auto flags skip confirmation only, never inspection, grouping, safety
+checks, or validation.
 Genuinely ambiguous grouping is still asked about.
 
-A caller such as `create-pr` or `release` may pass a scope: a repository root
-`<dir>` and a list of paths in it. With a scope, inspect, group, stage, and
-commit only within it, and leave everything outside it untouched. If the index
-holds staged changes outside it, stop and ask; never commit them in a scoped
-run. Without one, the scope is the whole working tree.
+Paths set a scope, whether the user passes them or a caller such as
+`create-pr`, `release`, or `respond-pr` does. With a scope, inspect, group,
+stage, and commit only within it, and leave everything outside it untouched. If
+the index holds staged changes outside it, stop and ask; never commit them in a
+scoped run. Without paths, the scope is the whole working tree.
 
 ## Conventions
 
@@ -50,8 +53,8 @@ co-author trailers unless the repository requires them.
 
 ## 1. Inspect
 
-From the repository root (with a scope, run Git as `git -C <dir>` and limit
-the status and diff commands with `-- <paths>`):
+From the repository root (with `--dir`, run Git as `git -C <dir>`; with a
+scope, limit the status and diff commands with `-- <paths>`):
 
 ```bash
 git status --short

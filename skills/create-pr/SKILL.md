@@ -151,9 +151,10 @@ This PR should not include:
 
 ## 4. Hand off to the commit skill
 
-Run the `commit` skill with `<dir>` and the step 3 file scope; it owns staging,
-grouping, validation, commits, and the push. Never stage ad hoc, never use
-`git add .` or `git add -A`, and never push a second time yourself. Then verify:
+Run the `commit` skill with `--dir <dir>` and the step 3 file scope as its
+paths; it owns staging, grouping, validation, commits, and the push. Never stage
+ad hoc, never use `git add .` or `git add -A`, and never push a second time
+yourself. Then verify:
 
 ```bash
 git -C <dir> status --short --branch
