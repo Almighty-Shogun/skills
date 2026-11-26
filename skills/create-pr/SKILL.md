@@ -43,7 +43,9 @@ asks for them. If the harness cannot invoke one skill from another, read
 Use the current Git repository; outside one, inspect child directories with an
 `origin` remote and ask which to use. Derive `<dir>`, `<slug>`, `<repo-name>`,
 and `<default-branch>` (falling back to `main`). Run every git command as
-`git -C <dir> ...` and every GitHub command with `--repo <slug>`.
+`git -C <dir> ...` and every GitHub command with `--repo <slug>`. Run
+`git -C <dir> fetch origin "<default-branch>"` once, then compare against
+`origin/<default-branch>` everywhere, never the local `<default-branch>`.
 
 Read the instruction files, preferring hints under `## Pull Request`,
 `## Pull Requests`, or `## Git And PR Safety`:
@@ -94,9 +96,9 @@ containing whitespace, `..`, `@{`, `//`, a leading `-`, a trailing `/`, or
 When reusing a branch or a candidate exists, check its ancestry:
 
 ```bash
-git -C <dir> merge-base "<default-branch>" HEAD
-git -C <dir> rev-list --count "<default-branch>..HEAD"
-git -C <dir> rev-list --count "HEAD..<default-branch>"
+git -C <dir> merge-base "origin/<default-branch>" HEAD
+git -C <dir> rev-list --count "origin/<default-branch>..HEAD"
+git -C <dir> rev-list --count "HEAD..origin/<default-branch>"
 ```
 
 If it looks based on another feature branch or carries unrelated history,
@@ -122,9 +124,9 @@ in place on the current `HEAD`; never stash or switch through another base.
 The pull request covers the whole branch delta, not just uncommitted changes:
 
 ```bash
-git -C <dir> log --oneline "<default-branch>..HEAD"
-git -C <dir> diff --stat "<default-branch>...HEAD"
-git -C <dir> diff "<default-branch>...HEAD"
+git -C <dir> log --oneline "origin/<default-branch>..HEAD"
+git -C <dir> diff --stat "origin/<default-branch>...HEAD"
+git -C <dir> diff "origin/<default-branch>...HEAD"
 git -C <dir> diff
 git -C <dir> diff --cached
 ```
@@ -169,11 +171,11 @@ there is nothing to open.
 
 Repository style and templates take precedence. Otherwise:
 
-- Title: `<Kind>: <short human summary>`, mapping `fix/` → `Bugfix`, `feat/` →
-  `Feature`, `improvement/` → `Improvement`, `chore/` → `Chore`, `docs/` →
-  `Docs`. No Conventional Commit prefixes. If the full diff clearly contradicts
-  the branch prefix, flag the mismatch and ask; never rename a pushed branch
-  automatically.
+- Title: `<Kind>: <short human summary>`, mapping `fix/` → `Bugfix`,
+  `feat/` → `Feature`, `improvement/` → `Improvement`, `chore/` → `Chore`,
+  `docs/` → `Docs`. No Conventional Commit prefixes. If the full diff clearly
+  contradicts the branch prefix, flag the mismatch and ask; never rename a
+  pushed branch automatically.
 - Body: two or three short paragraphs. The first starts with `This PR
   resolves`, `This PR adds`, `This PR updates`, or `This PR improves`. For a
   bugfix, the second describes the old behavior with `Before this, ...` and the
@@ -216,5 +218,5 @@ A repository's `AGENTS.md` or `CLAUDE.md` may override defaults under
 | Default base branch, when not the GitHub-reported default | steps 1, 2, 4 |
 | Repository-specific file grouping | step 3 |
 | PR title and body style, required sections, or templates | step 5 |
-| Whether attribution trailers are wanted | step 5 |
+| Whether attribution trailers are wanted | steps 4, 5 |
 | Reviewers, labels, or draft-by-default policy | step 6 |
