@@ -31,8 +31,8 @@ pull request for the current branch. If none resolves, or several plausibly
 could, ask; never guess. Follow the repository and PR resolution conventions of
 `review-pr`.
 
-Reading and verifying feedback may proceed read-only. Before any edit, read
-the head:
+Check the head first, before any edit and before any local reproduction or
+verification:
 
 ```bash
 gh pr view <number> --repo <slug> \
@@ -41,8 +41,10 @@ gh pr view <number> --repo <slug> \
 
 Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
 `origin` is the head repository. A fork pull request passes only when `origin`
-is that fork, as when its author runs this. Otherwise stop and ask; never run
-`gh pr checkout` automatically.
+is that fork, as when its author runs this. Otherwise stop and ask before any
+edit; never run `gh pr checkout` automatically. Reading and verifying feedback
+may still proceed read-only, but from CI evidence and `gh pr diff`, never from
+local runs on a checkout that is not the PR head.
 
 ## Collect and group feedback
 
@@ -92,9 +94,9 @@ Unselected feedback gets no code changes.
 ## Verify before applying
 
 Never assume a reviewer is right. Check each selected request against the
-current code, tests, repository rules, public contracts, and compatibility
-requirements. A request that is technically wrong or incompatible is not
-applied; explain why instead:
+PR's code (the local checkout only when the head check passed), tests,
+repository rules, public contracts, and compatibility requirements. A request
+that is technically wrong or incompatible is not applied; explain why instead:
 
 ```text
 Not applied:
@@ -155,13 +157,21 @@ updates across the codebase. The following modifications were performed...
 ```
 
 Post exactly the approved text and never regenerate it afterwards unless the
-user asks for an edit. A reply that claims a change ("Updated this...") waits
-until the change is committed and pushed through the `commit` skill and the
-PR's current `headRefOid` contains it. Re-read `headRefOid` with `gh pr view`,
-run `git -C <dir> fetch origin` so later pushes by others are present, then
-check with `git -C <dir> merge-base --is-ancestor <commit> <headRefOid>`; until
-it passes, say it is waiting on the push. Replies that claim no change, such as
-answers and declined requests, do not wait.
+user asks for an edit. Replies that claim no change, such as answers and
+declined requests, do not wait. A reply that claims a change ("Updated
+this...") waits until the change is pushed and the PR head contains it:
+
+1. Offer the `commit` handoff with the changed files as its paths (plus
+   `--dir <dir>` outside the current repository); it owns grouping, commits,
+   and the push under its own confirmations.
+2. Re-read `headRefOid` with `gh pr view`, run `git -C <dir> fetch origin` so
+   later pushes by others are present, then check
+   `git -C <dir> merge-base --is-ancestor HEAD <headRefOid>`. `HEAD` is the
+   last commit `commit` created, so one check covers several commits. Post only
+   when it passes.
+3. If the user declines the commit or the push, or the check fails, end the run
+   and report each waiting reply in full, its thread and exact text. Approval
+   does not carry into a later run, which shows the text for approval again.
 
 Post a thread reply with the GraphQL `addPullRequestReviewThreadReply` mutation
 (`pullRequestReviewThreadId` is the thread `id`), or with
@@ -172,8 +182,8 @@ PR-level reply with `gh pr comment <number> --repo <slug> --body-file
 
 Resolving a thread is a separate approval: offer it once a request has been
 addressed or validly declined, validated where code changed, and replied to
-where appropriate. A thread resolved by a change also waits until the PR's
-`headRefOid` contains it. Resolve with the GraphQL `resolveReviewThread`
+where appropriate. A thread resolved by a change also waits until the same
+check passes. Resolve with the GraphQL `resolveReviewThread`
 mutation (`threadId` is the thread `id`). Never mark feedback resolved silently.
 
 ## Final summary
@@ -188,4 +198,5 @@ Waiting on push: 1
 ```
 
 Also name any unresolved conflict, out-of-scope request awaiting a decision, or
-validation failure that remains.
+validation failure that remains, and list each reply waiting on the push with
+its thread and exact text.
