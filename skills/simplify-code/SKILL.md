@@ -121,8 +121,8 @@ change that is not simpler, gets one targeted fix by a fresh fix agent that
 receives the finding and that area's files and records its edits as a patch
 too, then another validation; avoid open-ended repair loops. If that validation
 still fails, revert that area by reverse-applying its patches, newest first,
-and count the area as left unchanged. Never use
-checkout, restore, stash, or reset on a file with pre-existing changes.
+and count the area as left unchanged. Never use checkout, restore, stash, or
+reset on a file with pre-existing changes.
 
 Changes stay in the working tree: no commits, pushes, branches, or history
 edits, and unrelated uncommitted work is protected. Committing goes through the

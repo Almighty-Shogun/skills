@@ -101,5 +101,4 @@ formatters). Afterwards revert only the run's own hunks or restore those files
 from the copy; never use checkout, restore, stash, or reset on a file with
 pre-existing changes. The agent that creates temporary instrumentation or a
 harness removes it before handing off and lists anything left under
-`Temporary changes:`;
-remove only what this run created.
+`Temporary changes:`; remove only what this run created.
