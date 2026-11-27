@@ -117,10 +117,12 @@ duplicating it, and never overwrite an unrelated one; persist the plan, not the
 investigation. A saved plan with Open decisions carries `Status: Draft` under
 its title. The plan is a working note, committed only when the user asks. That
 file and any `.research/<topic>.md` from `source-research` are the only lasting
-writes: leave source, tests, configuration, and Git state alone. To reproduce a
-failure, prefer commands that do not rewrite tracked files (`npm ci`, no
-snapshot updates), and revert any tracked-file change the run caused. The agent
-that creates temporary instrumentation or a harness removes it before handing
-off and reports anything left; remove only what this run created. The plan is
-for review or later execution, never implemented
-automatically.
+writes: leave source, tests, configuration, and Git state alone. Before
+reproducing a failure, record `git status --porcelain` and copy the files it
+lists to a scratch directory outside the repository. Prefer commands that do
+not rewrite tracked files (no snapshot updates, no formatters). Afterwards
+revert only the run's own hunks or restore those files from the copy; never use
+checkout, restore, stash, or reset on a file with pre-existing changes. The
+agent that creates temporary instrumentation or a harness removes it before
+handing off and reports anything left; remove only what this run created. The
+plan is for review or later execution, never implemented automatically.

@@ -94,8 +94,12 @@ findings, and never overwrite unrelated research; persist conclusions and
 evidence, not the transcript. The file is a working note, committed only when
 the user asks. That file and any `.research/<topic>.md` from `source-research`
 are the only lasting writes: leave source, tests, configuration, and Git state
-alone. To reproduce a failure, prefer commands that do not rewrite tracked files
-(`npm ci`, no snapshot updates), and revert any tracked-file change the run
-caused. The agent that creates temporary instrumentation or a harness removes
-it before handing off and lists anything left under `Temporary changes:`;
+alone. Before reproducing a failure, record `git status --porcelain` and copy
+the files it lists to a scratch directory outside the repository. Prefer
+commands that do not rewrite tracked files (no snapshot updates, no
+formatters). Afterwards revert only the run's own hunks or restore those files
+from the copy; never use checkout, restore, stash, or reset on a file with
+pre-existing changes. The agent that creates temporary instrumentation or a
+harness removes it before handing off and lists anything left under
+`Temporary changes:`;
 remove only what this run created.
