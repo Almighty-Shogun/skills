@@ -1,12 +1,13 @@
 ---
 name: api-design
 description: >-
-  Design public and cross-boundary API contracts without implementing them.
-  Covers HTTP/REST, GraphQL, public package interfaces, exported types,
+  Design or review public and cross-boundary API contracts without implementing
+  them. Covers HTTP/REST, GraphQL, public package interfaces, exported types,
   component contracts, and service/module boundaries. Produces a concise design
   artifact under .api-design/, prioritizes repository conventions and
-  compatibility, and leaves implementation to another workflow.
-argument-hint: "<contract to design>"
+  compatibility, and leaves implementation to another workflow. Not for
+  implementation steps (plan-implementation) or private internals.
+argument-hint: "<contract to design or review>"
 ---
 
 # API Design
@@ -15,7 +16,8 @@ Design or review a contract consumed across an ownership or trust boundary
 before it is implemented: HTTP and GraphQL APIs, public C# and TypeScript
 types, package and SDK interfaces, component props and events, and
 service or module boundaries. Private implementation detail is out of scope
-unless it constrains the contract.
+unless it constrains the contract. A review of an existing contract reports its
+findings in chat and writes no artifact unless the user asks for one.
 
 The design answers what consumers can do, what behavior is promised, which
 errors and edge cases are part of the contract, and what compatibility
@@ -29,7 +31,9 @@ boundary, then the existing conventions it touches: naming, resource
 structure, status codes, error shapes, DTO patterns, serialization,
 pagination, filtering, auth, versioning, export patterns, and compatibility
 rules. Repository consistency beats generic best practice unless a convention
-causes a concrete problem. Do not redesign unrelated contracts.
+causes a concrete problem. When conventions disagree, prefer those of the
+affected boundary or package, then the newest, and record the inconsistency
+under Design decisions or Open questions. Do not redesign unrelated contracts.
 
 ## What to decide
 
@@ -46,6 +50,15 @@ sync versus async, cancellation, ownership and lifetime, exception semantics,
 extension points, external implementers, serialization or ABI concerns, and
 misuse resistance. Impose language-specific patterns only where they improve
 the contract.
+
+**GraphQL**: types and nullability, queries versus mutations, input types,
+pagination only where the schema already uses a pattern, errors in `errors`
+versus typed result unions, field-level authorization, and deprecation over
+removal.
+
+**Components**: props, defaults, and which are required, controlled versus
+uncontrolled state, events or callbacks and their payloads, children or slots,
+ref and styling exposure, and accessibility promises.
 
 **Errors**: every operation gets clear failure semantics in the repository's
 existing error model: status semantics, error shape, and client versus server
@@ -89,18 +102,27 @@ under `Open questions` (`Should duplicate submissions return the original
 result or a conflict?`) and keep specifying the independent parts.
 
 Use authoritative evidence when framework, protocol, or specification behavior
-affects the design, through `source-research` for anything substantial. Use
-sub-agents only for genuinely independent boundaries, such as an HTTP contract
-alongside an SDK surface, each started with an explicit model and effort level
-that fits its task: higher for boundaries that need deep tracing or carry
-compatibility risk, lower for simple single-surface designs.
+affects the design: reuse an existing `.research/` file whose version still
+applies, else use `source-research` for anything substantial. Use sub-agents
+only for genuinely independent boundaries, such as a component's props and an
+unrelated package interface, each started with an explicit model and effort
+level that fits its task: higher for boundaries that need deep tracing or carry
+compatibility risk, lower for simple single-surface designs. Each hands off
+its proposed contract, decisions, and open questions, and writes no file; the
+parent reconciles shared semantics (errors, retries, pagination, auth) and
+alone writes the artifact.
 
 ## Artifact
 
-Write to `.api-design/<descriptive-topic>.md`, such as
-`.api-design/idempotency.md`. If a design for the topic exists, update it:
-keep still-valid decisions, replace outdated assumptions, and never overwrite
-an unrelated design.
+Write to `.api-design/<descriptive-topic>.md` under the repository root, such
+as `.api-design/idempotency.md`. It is a working note, committed only when the
+user asks. If a design for the topic exists, update it: keep still-valid
+decisions, replace outdated assumptions, and never overwrite an unrelated
+design.
+
+Start the artifact with `Status: Draft | Approved`. It is `Approved` only once
+the user approves it and every open question is answered or waived. Fold
+answers in by rerunning `api-design` on the same topic.
 
 Use only the sections that help, typically Goal, Proposed contract, Behavior,
 Errors, Compatibility, Design decisions, and Open questions. Show concrete
