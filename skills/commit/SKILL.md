@@ -2,11 +2,12 @@
 name: commit
 description: >-
   Create focused commits from the current working tree: group changes by
-  atomic intent, propose the plan, stage narrowly, validate each group before
-  committing, and ask before pushing. Uses feat, fix, improvement, chore, and
-  docs types by default. Never rewrites history or creates release commits,
-  except a release-metadata commit the release skill requests.
-argument-hint: "[--auto-commit] [--auto-push] [--auto-all] [--dir <dir>] [<path>...]"
+  atomic intent, propose the plan unless an auto flag skips that confirmation,
+  stage narrowly, validate each group before committing, and ask before
+  pushing. Uses feat, fix, improvement, chore, and docs types by default. Never
+  rewrites history or creates release commits, except a release-metadata commit
+  the release skill requests.
+argument-hint: "[--auto-commit] [--auto-push] [--auto-all] [--dir <dir>] [--message <msg>] [<path>...]"
 ---
 
 # Commit
@@ -16,14 +17,15 @@ review, revert, and cherry-pick. The goal is not the fewest commits.
 
 ## Contract
 
-Allowed: narrow staging, `git commit` for approved groups, and `git push` after
-separate approval or an auto-push flag. Never amend, rebase, reset,
-force-push, revert user work, create or delete branches (publishing the current
-branch with `git push -u` is not creating one), create release or version
-commits (the only exception is a release-metadata commit the `release` skill
-requests), stage broadly with `git add .` or `git add -A`, bypass hooks with
-`--no-verify`, or edit `.git` directly. If Git write access is blocked,
-report the operation instead of working around it.
+Allowed: narrow staging, `git commit` for approved groups (unless an `--auto-*`
+flag skips that confirmation), and `git push` after separate approval or an
+auto-push flag. Never amend, rebase, reset, force-push, revert user work,
+create or delete branches (publishing the current branch with `git push -u` is
+not creating one), create release or version commits (the only exception is a
+release-metadata commit the `release` skill requests), stage broadly with
+`git add .` or `git add -A`, bypass hooks with `--no-verify`, or edit `.git`
+directly. If Git write access is blocked, report the operation instead of
+working around it.
 
 ## Invocation
 
@@ -31,8 +33,11 @@ report the operation instead of working around it.
 - `--auto-push` skips confirmation before pushing.
 - `--auto-all` skips both.
 - `--dir <dir>` names the repository root; the default is the current
-  repository.
-- Positional arguments are always paths inside that repository, never a root.
+  repository's root. Every Git command in this skill runs as `git -C <dir>`.
+- `--message <msg>` makes the whole scope a single commit with `<msg>` as its
+  exact message. It counts as a requested message, so step 4's rule against
+  versions in subjects does not block it.
+- Positional arguments are always paths relative to that root, never a root.
 
 The auto flags skip confirmation only, never inspection, grouping, safety
 checks, or validation.
@@ -46,26 +51,30 @@ scoped run. Without paths, the scope is the whole working tree.
 
 ## Conventions
 
-Read `AGENTS.md` and `CLAUDE.md` first. Precedence: explicit repository
-instructions, then established recent history, then this skill. Ask when
-instructions conflict materially. Add no tool-attribution, generated-by, or AI
-co-author trailers unless the repository requires them.
+Read every `AGENTS.md` and `CLAUDE.md` in the repository first, skipping `.git`,
+`node_modules`, and `vendor`. Precedence: explicit repository instructions, then
+established recent history, then this skill. Ask when instructions conflict
+materially. Add no tool-attribution, generated-by, or AI co-author trailers
+unless the repository requires them.
 
 ## 1. Inspect
 
-From the repository root (with `--dir`, run Git as `git -C <dir>`; with a
-scope, limit the status and diff commands with `-- <paths>`):
+With a scope, limit the status and diff commands with `-- <paths>`:
 
 ```bash
-git status --short
+git status --short --untracked-files=all
 git branch --show-current
 git diff --stat
 git diff --cached --stat
 ```
 
 With a scope, also run `git diff --cached --name-only` without the path filter,
-so staged changes outside the scope are seen (see Invocation). When nothing in
-the scope is left to commit, go to step 8.
+so staged changes outside the scope are seen (see Invocation).
+
+Stop and ask before committing when plain `git status` names a merge, rebase,
+cherry-pick, or revert in progress, since a commit would conclude or join it,
+or when `git branch --show-current` prints nothing (detached HEAD). When nothing
+is left to commit, within the scope if there is one, go to step 8.
 
 Read the relevant diffs and every untracked file before grouping; never infer
 intent from filenames. Do not commit secrets, `.env` values, keys, logs, caches,
@@ -119,7 +128,8 @@ an interactive one. If selective staging is not safe, ask.
 | `chore:` | maintenance, dependencies, lockfiles, formatting, internal cleanup, instructions, skills |
 
 `feat` and `fix` are the default pair. Prefer `fix` whenever something was
-actually wrong and `feat` whenever anything was added, however small. `chore` is
+actually wrong and `feat` whenever anything was added, however small. A
+documentation-only change is `docs`, even when it corrects an error. `chore` is
 narrow: a change to what a consumer can do or what runs is not a chore. These
 match the `create-pr` branch prefixes, so a pull request's commits can share
 its kind. Use other types only when repository instructions say so.
@@ -139,7 +149,8 @@ chore: update repository skills
 Subject-only by default. Add a body only when the user or repository asks for
 one, recent history treats bodies as normal, or non-obvious context genuinely
 belongs in history; never to narrate implementation, validation, or tool
-activity. No package versions in subjects unless requested.
+activity. No package versions in subjects unless requested (`--message`
+counts).
 
 ## 5. Propose the plan
 
@@ -166,17 +177,20 @@ For each group in turn:
    preserved staged state that belongs to it.
 2. Validate the staged group: always `git diff --cached --check`, plus checks
    matching the scope and repository instructions (tests, build, or typecheck
-   for code; the regression test for a fix; a docs build for docs). Only
+   for code; the regression test for a fix; a docs build for docs). Leftover
+   conflict markers from `--check` block the commit; show its other findings,
+   such as intentional Markdown hard breaks or CRLF line ends, and ask. Only
    `--check` sees the index alone: tests, builds, and typechecks run on the
    working tree, so they also see the unstaged changes of later groups; say so
    in the report when that matters. Passing checks do not excuse an obviously
    wrong diff. If a required check fails, do not commit; stop at that group,
-   leave later groups uncommitted, never push the partial set, report it, and
-   change code only when the user asked this workflow to fix it. Report checks
-   that were skipped or impractical.
+   leave later groups uncommitted, never push the partial set, report it with
+   the group left staged, and change code only when the user asked this
+   workflow to fix it. Report checks that were skipped or impractical.
 3. Run `git diff --cached --name-only` without a path filter; if it lists a
-   file outside the group, stop and ask. Then `git commit -m "<message>"` and
-   `git status --short`.
+   file outside the group, stop and ask. Then `git commit -m "<message>"`; if
+   it fails (a hook rejection, a signing failure), stop as for a failed check:
+   report it, no push. Otherwise run `git status --short`.
 
 If the working tree changes unexpectedly mid-workflow, stop and re-inspect.
 
@@ -199,15 +213,23 @@ Mention skipped or failed validation; do not narrate each Git command.
 ## 8. Push
 
 Push after all commits are created and reported, asking first unless
-`--auto-push` or `--auto-all` applies. Check the current branch, its upstream,
-and the plausible remotes, and push only the branch with the new commits. If
-the current branch has no upstream, publish it with
-`git push -u <remote> <current-branch>`; that is not creating a branch. Never
-`git push --all`, push tags, force-push, or silently pick an unusual remote when
-several are plausible; ask when no safe target is clear.
+`--auto-push` or `--auto-all` applies. The remote is the one a caller such as
+`create-pr` names, else the upstream's; otherwise check the plausible remotes,
+and never silently pick an unusual one when several are plausible. Push only
+the current branch, always with an explicit refspec, so Git configuration
+cannot widen or redirect the push:
 
-When there was nothing to commit but the current branch is ahead of its
-upstream (`git log --oneline @{u}..HEAD`), or has no upstream and holds commits
-on no remote (`git log --oneline HEAD --not --remotes`), offer to push it. List
-those commits as ones this run did not create, and always ask: `--auto-push`
-and `--auto-all` never cover this push.
+```bash
+git push --no-follow-tags <remote> HEAD:refs/heads/<current-branch>
+```
+
+When the branch has no upstream, add `-u` to publish it; that is not creating a
+branch. When the upstream's branch name differs from the current branch, ask.
+Never `git push --all`, push tags, force-push, or push from a detached HEAD;
+ask when no safe target is clear.
+
+Every push lists the commits it carries that this run did not create, from
+`git log --oneline @{u}..HEAD` or, without an upstream,
+`git log --oneline HEAD --not --remotes`. When there are any, always ask:
+`--auto-push` and `--auto-all` never cover them. When there was nothing to
+commit but such commits exist, offer to push them the same way.
