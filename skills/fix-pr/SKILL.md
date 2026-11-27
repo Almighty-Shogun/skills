@@ -19,32 +19,49 @@ belongs to `review-pr`, reviewer feedback to `respond-pr`, and merging to
 
 Approved fixes change the working tree only. Commits and pushes go through the
 `commit` skill when the user wants them; this skill never commits, pushes,
-amends, rebases, or creates or deletes branches. Stay within the approved
-failure scope, follow repository conventions, and protect unrelated uncommitted
-work.
+amends, rebases, creates or deletes branches, or reruns workflows
+(`gh run rerun`). Stay within the approved failure scope, follow repository
+conventions, and protect unrelated uncommitted work.
+
+Read every `AGENTS.md` and `CLAUDE.md` that applies and follow them; they
+override this skill's defaults, and when two conflict, ask which wins. Give
+each sub-agent the rules it needs.
 
 ## Resolve the PR
 
-Use the PR URL when given, else the number, resolved per `review-pr`, else the
-pull request for the current branch. If none resolves, or several plausibly
-could, ask for a number or URL; never guess. Follow the repository and PR
-resolution conventions of `review-pr`.
+Use the PR URL when given, else the number, else the pull request for the
+current branch, resolving `<dir>`, `<origin-slug>`, and `<slug>` as steps 1 and
+2 of `review-pr` do (`../review-pr/SKILL.md`); if that file cannot be read,
+stop and say that `review-pr` is missing. If none resolves, or several
+plausibly could, list the open pull requests and ask as its step 2 does; never
+guess.
 
 Reading checks and CI logs may proceed read-only. Before any local
 reproduction or edit, read the head:
 
 ```bash
 gh pr view <number> --repo <slug> \
-    --json headRefName,headRefOid,headRepository,headRepositoryOwner
+    --json state,headRefName,headRefOid,headRepository,headRepositoryOwner
+git -C <dir> status --short
 ```
+
+Unless `state` is `OPEN`, only report: checks on that pull request can no
+longer re-run.
 
 Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
 `<origin-slug>` is the head repository (`headRepositoryOwner.login` and
-`headRepository.name`). A fork pull request passes only when `origin` is that
-fork, as when its author runs this; `<slug>` is then the fork's parent, per
-`review-pr`. Otherwise diagnose from CI evidence or `gh pr diff` without local
-runs, and stop and ask before any edit; never run `gh pr checkout`
-automatically.
+`headRepository.name`, compared case-insensitively). A fork pull request passes
+only when `origin` is that fork, as when its author runs this; `<slug>` is then
+the fork's parent, unless a URL names a pull request inside the fork. Otherwise
+diagnose from CI evidence or `gh pr diff` without local runs, ask **This
+checkout is not the PR head. Switch to it, or continue without local runs or
+edits?**, and run the head check again before any edit; never run
+`gh pr checkout` automatically.
+
+Record the paths `git status` lists. With uncommitted changes the tree is not
+the PR head for reproduction, so reproduce nothing locally; an approved fix may
+still be applied, and validation then leaves those paths' pre-existing changes
+out of the diff it checks.
 
 ## Failing checks
 
@@ -58,8 +75,14 @@ gh run view <run-id> --repo <slug> --log-failed
 
 With `--json`, `gh pr checks` exits 0 whatever the check states, so read
 `bucket` (`fail`, `pending`, `cancel`); exit 1 means no checks were reported
-or the command failed. Take `<run-id>` from the `link` field
-(`.../actions/runs/<run-id>/job/...`).
+or the command failed. Take `<run-id>` and `<job-id>` from the `link` field
+(`.../actions/runs/<run-id>/job/<job-id>`). `gh run view` refuses while another
+job of the run is still running; then read the finished job's log with
+`gh api repos/<slug>/actions/jobs/<job-id>/logs`.
+
+When nothing failed, report that, naming any checks still running, and stop;
+likewise when no checks were reported. Otherwise diagnose only completed
+failures, and name the checks still running.
 
 GitHub Actions only. For an external provider (Buildkite, CircleCI, Jenkins,
 and the like), report the check, its status, and its link, and never infer a
@@ -75,11 +98,13 @@ code to compensate for an infrastructure failure.
 
 Give each independent root cause its own diagnosis sub-agent, with only its
 failing checks, the decisive log excerpt, the relevant repository context, and
-the commands to reproduce. When the head check passed, reproduce locally where
-practical, using the same test, build, typecheck, lint, or workspace command.
-When the head check failed, or runner-only behavior, platform differences,
-secrets, or hosted services make that impossible, work from the CI evidence and
-say so. A red workflow alone does not establish a cause.
+the commands to reproduce. When the head check passed on a clean tree,
+reproduce locally where practical, using the same test, build, typecheck, lint,
+or workspace command. When it did not, or runner-only behavior, platform
+differences, secrets, or hosted services make that impossible, work from the CI
+evidence and say so. A red workflow alone does not establish a cause.
+Diagnosis sub-agents that run local commands share the working tree and its
+outputs, caches, and ports, so run them one at a time.
 
 Start each sub-agent in this skill with an explicit model and the highest
 effort level: diagnosis reproduces failures and decides the cause, so it gets
@@ -147,16 +172,17 @@ Remaining issue: <only when applicable>
 ```
 
 Then a fresh validation sub-agent checks the original failure, the approved
-diagnosis, the actual diff, the relevant local checks, regressions, and whether
-CI strictness was weakened, without relying on the implementer's account. A
-concrete defect it finds gets one targeted fix and another validation; avoid
-open-ended repair loops.
+diagnosis, the actual diff (less the recorded pre-existing changes), the
+relevant local checks, regressions, and whether CI strictness was weakened,
+without relying on the implementer's account. A concrete defect it finds gets
+one targeted fix and another validation; avoid open-ended repair loops.
 
 ## Report
 
 Local fixes trigger no new CI run until they are committed and pushed, so say
-the changes are ready for the `commit` skill and never promise green CI before a
-post-fix run confirms it. A run triggered independently may be inspected.
+the changes are ready for `commit --dir <dir> <changed paths>` and never
+promise green CI before a post-fix run confirms it. A run triggered
+independently may be inspected.
 
 ```text
 Root causes found: 2
