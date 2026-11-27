@@ -5,7 +5,7 @@ description: >-
   in the standard emoji house format, with one section per changed package in
   monorepos. --file writes them under .release-notes/; --redo <tag>
   regenerates an existing release, editing it only after approval.
-argument-hint: "[project] [base-ref] [--file] [--redo <tag>]"
+argument-hint: "[project] [base-ref | --redo <tag>] [--head <sha> --tag <id> [--prerelease]] [--file]"
 ---
 
 # Release Notes
@@ -22,19 +22,23 @@ and an approved edit to an existing release's notes with `--redo`.
 ## Invocation
 
 ```text
-release-notes [project] [<base-ref>] [--file]
+release-notes [project] [<base-ref>] [--head <sha> --tag <id> [--prerelease]] [--file]
 release-notes [project] --redo <tag> [--file]
 ```
 
-`--redo` takes no `<base-ref>`; refuse the combination rather than ignore
-either.
+`--redo` takes no `<base-ref>`, `--head`, `--tag`, or `--prerelease`; refuse
+the combination rather than ignore either.
 
-A project selector picks one repository when the working directory holds
-several; discover them, never hardcode names, and ask when the argument does
-not identify one. One repository per run.
+`[project]` picks one repository when the working directory holds several, or
+one independently versioned package in a monorepo, as in `release`; discover
+them, never hardcode names, and ask when the argument does not identify one.
+One repository per run. With a package, the notes cover only that package, and
+base candidates are only tags of its tag pattern (such as
+`<package>@<version>`, from instructions or its existing tags).
 
 - **Direct**: generate the notes and return them in chat, also writing the file
-  with `--file`.
+  with `--file`. `--head`, `--tag`, and `--prerelease` set the head, its future
+  tag, and the prerelease state; the `release` skill passes them.
 - **`--redo <tag>`**: verify the release exists, generate replacement notes,
   show the current and proposed notes, and update GitHub only after approval.
   With `--file`, write the replacement into the repository instead and leave
@@ -50,34 +54,49 @@ non-emoji structure.
 ## Range
 
 Derive `<dir>`, `<slug>`, and `<default-branch>`; use `git -C <dir>` and
-`--repo <slug>` throughout. Run `git -C <dir> fetch origin --tags --prune`.
+`--repo <slug>` throughout. `<slug>` comes from `origin`; when it is a fork, ask
+whether to use it:
 
-- Direct: head is `origin/<default-branch>`, described as a stable release
-  unless the user says the next one is a prerelease.
+```bash
+gh repo view "$(git -C <dir> remote get-url origin)" --json nameWithOwner,isFork
+```
+
+Run `git -C <dir> fetch origin --tags --prune`.
+
+- Direct: head is `--head`, else `origin/<default-branch>`, described as a
+  stable release unless `--prerelease` is given or the user says the next one
+  is a prerelease.
 - `--redo <tag>`: head is the tag (which must resolve locally), a prerelease
   when its release is one.
 - From the `release` skill: accept its resolved base, head, target tag, and
   prerelease state as given; it resolves the base with this rule.
 
 The base rule is the same in every mode: a given `<base-ref>` wins; otherwise
-candidates are published releases whose tag is an ancestor of the head,
-excluding the head's own tag, counting only non-prereleases for a stable head
-and releases of any kind for a prerelease head, so successive betas describe
-changes since the previous beta. Take the nearest such ancestor of the head (no
-other candidate lies between it and the head). With none, the base is the empty
+candidates are published releases, and tags without a release that follow the
+repository's release tag scheme (semver with or without `v`, or the package's
+pattern; a prerelease when the version carries a prerelease suffix), whose tag
+is an ancestor of the head, excluding the head's own tag, counting only
+non-prereleases for a stable head and any kind for a prerelease head, so
+successive betas describe changes since the previous beta. With `--redo`, also
+skip candidates on the head commit and releases published after the head's own
+release. Take the nearest such ancestor of the head (no other candidate lies
+between it and the head), and the highest version when several qualify. A
+candidate on the head commit means no changes. With none, the base is the empty
 tree (`git -C <dir> hash-object -t tree /dev/null`), so the first commit's
-changes are included; use `git log <head>` for the commit list, since a tree
-cannot start a log range. List every release, not only the latest 100, so an
-old head's base is not missed:
+changes are included; use `git log <head>` for the commit list. List every
+release, not only the latest 100, so an old head's base is not missed:
 
 ```bash
 gh release list --repo <slug> --exclude-drafts --limit 10000 \
   --json tagName,isPrerelease,publishedAt
+git -C <dir> tag --merged <head>
 git -C <dir> merge-base --is-ancestor <tag> <head>
 ```
 
-Verify both refs resolve. If they are the same commit, report no changes and
-stop. The empty-tree base never equals the head, so a one-commit repository
+Verify both refs resolve, and that a given `<base-ref>` is an ancestor of the
+head; otherwise ask, since a two-dot diff from a divergent base reports the
+base's own changes as removals. If they are the same commit, report no changes
+and stop. The empty-tree base never equals the head, so a one-commit repository
 with no earlier release still gets notes for that commit.
 
 ## Evidence
@@ -141,7 +160,8 @@ When the refs make the comparison meaningful (never for the empty-tree base),
 end with
 `**Full Changelog:** https://github.com/<slug>/compare/<base>...<compare-head>`,
 where `<compare-head>` is the future tag for a release workflow, the existing
-tag for `--redo`, or the resolved head otherwise.
+tag for `--redo`, or the resolved head otherwise. Write each ref as a tag name,
+a bare branch name (`main`, never `origin/main`), or a full SHA.
 
 ```markdown
 # `@example/core`
@@ -196,4 +216,5 @@ release's notes.
 
 Direct: the complete notes, the resolved range, the saved path with `--file`,
 and any material classification uncertainty. After `--redo`: which release was
-updated, with its URL.
+updated, with its URL; with `--file`, the saved path and that GitHub was left
+unchanged. After a declined `--redo` edit: that nothing was changed.
