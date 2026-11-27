@@ -29,6 +29,10 @@ release-notes [project] --redo <tag> [--file]
 `--redo` takes no `<base-ref>`, `--head`, `--tag`, or `--prerelease`; refuse
 the combination rather than ignore either.
 
+With two positionals, the first is `[project]` and the second `<base-ref>`. A
+lone positional that resolves as a ref (`git rev-parse --verify`) is
+`<base-ref>`; otherwise it is `[project]`.
+
 `[project]` picks one repository when the working directory holds several, or
 one independently versioned package in a monorepo, as in `release`; discover
 them, never hardcode names, and ask when the argument does not identify one.

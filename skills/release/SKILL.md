@@ -246,10 +246,12 @@ final release SHA itself is proven.
 
 ## 9. Release-notes range
 
-Hand `release-notes` the repository, the unit, `<release-id>`, `<target-sha>`,
-the prerelease state, and the base (omitted for the empty tree); if the
-harness cannot invoke skills, follow `../release-notes/SKILL.md` inline; if
-neither works, stop with no release and say that `release-notes` is missing:
+Run `release-notes` from `<dir>`, so the working directory selects the
+repository, and hand it the unit as its own positional (omitted for a
+single-unit repository), `<release-id>`, `<target-sha>`, the prerelease state,
+and the base (omitted for the empty tree). If the harness cannot invoke skills,
+follow `../release-notes/SKILL.md` inline; if neither works, stop with no
+release and say that `release-notes` is missing:
 
 ```text
 release-notes [<unit>] [<base>] --head <target-sha> --tag <release-id> [--prerelease]
