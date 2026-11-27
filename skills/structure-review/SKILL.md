@@ -5,7 +5,8 @@ description: >-
   and improvement opportunities. Use repository structure, meaningful Git
   history, dependency boundaries, and existing architectural decisions to
   produce an evidence-based Markdown review. Analysis only; never implement
-  changes.
+  changes. Not for bugs (bughunt), PRs (review-pr), or local simplification
+  (simplify-code).
 argument-hint: "[--scope <scope>]"
 ---
 
@@ -14,7 +15,10 @@ argument-hint: "[--scope <scope>]"
 Review the structural quality of a repository or a scope within it: coupling
 and change amplification, poor locality or cohesion, dependency direction,
 boundary leaks, hard-to-test structures, and architecture that pressures public
-contracts. Not linting, style review, bug hunting, or implementation.
+contracts. Not linting, style review, bug hunting, or implementation. Route a
+finding to implement to `plan-implementation` or `delegate-task`, a
+public-contract change it flags to `api-design`, and a bug it notices to
+`bughunt`.
 
 ```text
 structure-review [--scope <scope>]
@@ -23,7 +27,8 @@ structure-review [--scope <scope>]
 Scope may also be natural language ("the structure around authentication");
 without one, review the whole repository. Scope targets the recommendations, not
 the reading: inspect dependencies, consumers, and adjacent modules outside it
-when they prove a structural issue.
+when they prove a structural issue. If the scope resolves to no files or
+modules, stop and ask, and write nothing.
 
 ## Reconnaissance
 
@@ -31,13 +36,16 @@ Read the repository and package layout, dependency boundaries, public and
 cross-module contracts, test setup, and the architecture record: ADRs,
 `ARCHITECTURE.md`, READMEs, contributing docs, `AGENTS.md` and `CLAUDE.md`, and
 comments documenting structural constraints. Ignore `node_modules`, `vendor`,
-build output, generated code and migrations, lockfiles, and third-party source.
+build output, generated code, generated migrations, lockfiles, and third-party
+source.
 
 Use Git history to prioritize: areas that repeatedly change together, need
 coordinated edits, recur in fixes and features, or accumulate workarounds. Churn
 alone is not a problem, so discount renames, formatting, generated updates,
 version bumps, one-off migrations, and mechanical moves. Stable code that is
-understandable, testable, and cohesive gets no invented improvements.
+understandable, testable, and cohesive gets no invented improvements. Without
+Git, or with shallow history, the report says so, skips history-based
+prioritization, and never cites stability as evidence.
 
 Do not relitigate an intentional architectural decision without evidence. When
 its original constraints no longer hold, cite the decision, say what changed,
@@ -61,16 +69,17 @@ coupling, and demonstrated friction, not pattern preference.
 ## Investigation
 
 Use reconnaissance to find distinct structural areas, then give each
-independent area its own sub-agent with only the context it needs. Start each
-with an explicit model and effort level that fits its task: higher for areas
-needing deep tracing, lower for shallow ones. Each hands off:
+independent area its own sub-agent with only the context it needs; a single
+small area may be reviewed directly. Start each with an explicit model and
+effort level that fits its task: higher for areas needing deep tracing, lower
+for shallow ones. Each hands off:
 
 ```text
 Area:
 Type:
 Evidence:
 Impact: (only when justified)
-Suggested direction:
+Suggested direction: (only when justified)
 Confidence:
 Relevant files/modules:
 Compatibility/public-contract effect:
@@ -110,12 +119,20 @@ recommendation should preserve it.
 
 ## Report
 
-Write `STRUCTURE_REVIEW.md`. If one exists, update it only when it is clearly
-the same review; otherwise keep it and use a unique descriptive name. A review
-that finds nothing evidence-backed is a short report saying so; never
-manufacture findings.
+Write `STRUCTURE_REVIEW.md` at the repository root
+(`git rev-parse --show-toplevel`), whatever the scope. It is a working note,
+committed only when the user asks. If one exists, update it only when it is
+clearly the same review: keep still-valid findings, drop resolved ones, and
+preserve unrelated content. Otherwise keep it and write
+`STRUCTURE_REVIEW-<scope-slug>.md` at the same root, such as
+`STRUCTURE_REVIEW-packages-api.md`. A review that finds nothing evidence-backed
+is a short report saying so; never manufacture findings.
 
 ```md
+Scope: <scope, or whole repository>
+Date: YYYY-MM-DD
+Commit: <reviewed commit>
+
 ## <Short structural finding>
 
 Type: Architectural problem | Improvement opportunity
@@ -127,7 +144,7 @@ Impact: High | Medium | Low (only when justified)
 Relevant areas:
 - `path/or/module`
 
-Suggested direction:
+Suggested direction: (only when justified)
 <One short architectural direction.>
 
 Compatibility:
@@ -143,3 +160,8 @@ HTML, Mermaid, or diagrams unless asked.
 Analysis only: the review file is the only change. No refactors, renames, moved
 modules, test or dependency changes, or branches; protect unrelated
 uncommitted work.
+
+## Final summary
+
+The finding count per confidence and the report path, without repeating the
+report.
