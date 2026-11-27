@@ -5,6 +5,7 @@ description: >-
   Validates current changes against requirements and repository behavior without
   rewriting correct code. Use only when the user or repository instructions
   explicitly ask for it.
+argument-hint: "[<paths> | <commit> | <base>...<head>]"
 ---
 
 # Code Validation
@@ -21,18 +22,30 @@ Run the review in a fresh validation agent, so it judges the repository state
 and the diff rather than an implementation summary. Give it a Task Contract
 (intended behavior, scope, constraints, acceptance criteria, drawn from the
 request, tests, issue context, or an approved plan), repository access, the
-current diff and status, the relevant tests, and any `AGENTS.md` or `CLAUDE.md`.
+diff of the resolved scope (`git show <commit>`, `git diff <base>...<head>`, the
+named paths, or the working-tree diff), the relevant tests, and any `AGENTS.md`
+or `CLAUDE.md`. When nothing states the intent, infer it from the diff and
+commit messages, label it inferred, and skip missed-requirement findings.
 Leave out implementation reasoning and self-assessment unless a needed fact
 cannot be recovered from the repository. Start each agent with an explicit model
 and effort level that fits its task: highest for validation and fixes, lower for
-simple read-only research.
+simple read-only research. When a fresh agent cannot be started, validate
+inline and say that the result is not independent.
 
 ## Scope
 
-Default to the working-tree changes: `git diff HEAD` plus the untracked files
-from `git status`. Without any, validate the files, commit, branch comparison,
-or behavior the user names. Read beyond the diff only as far as dependencies,
-contracts, tests, and regressions require; no broad audit unless asked.
+Validate the files, commit, branch comparison, or behavior the user names.
+When nothing is named, default to the working-tree changes: `git diff HEAD`
+plus the untracked files from `git ls-files --others --exclude-standard`, or
+`git diff --cached` plus untracked files when HEAD does not exist. Leave out
+known skill artifacts (`BUG_REPORT.md`, `.bughunt/`, `.plan-implementation/`,
+`.research/`, `.repository-research/`, `.api-design/`, `STRUCTURE_REVIEW.md`,
+`STRUCTURE_REVIEW-<scope-slug>.md`, `SIMPLIFICATION_REPORT.md`,
+`.release-notes/`) unless they are the subject. With a clean tree,
+validate the branch against its merge-base with the default branch; on the
+default branch with nothing to compare, ask. Outside a Git repository, ask for
+the files. Read beyond the diff only as far as dependencies, contracts, tests,
+and regressions require; no broad audit unless asked.
 
 ## What it checks
 
@@ -46,9 +59,14 @@ upgraded dependencies: necessity, actual use, compatibility, and breaking
 release notes, with maintenance, license, or transitive concerns only when they
 matter. Missing or insufficient tests.
 
-It runs the narrowest useful tests, build, lint, or typecheck. Passing checks
-are evidence, not proof; it checks whether they exercise the changed contract
-and its failure paths. Repository contracts and technical evidence outrank
+It runs the narrowest useful tests, build, lint, or typecheck, in non-mutating
+variants only: no `--fix`, CI mode for snapshot tests, no installs. It compares
+`git status` before and after and reports anything that changed. When a check
+fails, it checks whether it also fails on the base of the change (HEAD for
+working-tree changes) in a temporary worktree, never by stashing, and reports
+pre-existing failures separately from regressions. Passing checks are
+evidence, not proof; it checks whether they exercise the changed contract and
+its failure paths. Repository contracts and technical evidence outrank
 reviewer preference, so correct code is not rewritten for style.
 
 ## Output
@@ -60,8 +78,8 @@ Validation
 3. [Low] ...
 ```
 
-or `Validation passed. No actionable issues found.`, optionally with one line on
-the checks run.
+or `Validation passed. No actionable issues found.` Either way, add one line on
+the checks that ran and those that could not.
 
 - **High**: incorrect behavior, a concrete data or security risk, a broken
   contract, a serious regression, or a material performance failure.
@@ -78,6 +96,18 @@ exist.
 ## Fixes
 
 When the user asks for fixes, use a fresh implementation agent with only the
-Task Contract, the findings, and repository access, then run a fresh validation
-rather than letting the fixer approve its own work. Run one fix round only, then
-report any remaining findings to the user.
+Task Contract, the findings the user selected, and repository access. Changes
+stay in the working tree: no commits, pushes, branches, or history edits, and
+unrelated uncommitted work is protected. It hands off:
+
+```text
+Finding: <number>
+Status: Fixed | Not fixed: <reason>
+Files changed:
+Checks run:
+```
+
+Then run a fresh validation of the original scope plus the fix's working-tree
+changes, against the same Task Contract, rather than letting the fixer approve
+its own work. Run one fix round only, then report any remaining findings to
+the user.
