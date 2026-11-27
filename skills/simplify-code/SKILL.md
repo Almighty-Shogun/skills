@@ -118,9 +118,10 @@ was not independent.
 Attribute each finding to an area through the handoffs' `Files changed`. A
 concrete regression, or another finding such as a removed why-comment or a
 change that is not simpler, gets one targeted fix by a fresh fix agent that
-receives the finding and that area's files, then another validation; avoid
-open-ended repair loops. If that validation still fails, revert that area by
-reverse-applying its own patch and count the area as left unchanged. Never use
+receives the finding and that area's files and records its edits as a patch
+too, then another validation; avoid open-ended repair loops. If that validation
+still fails, revert that area by reverse-applying its patches, newest first,
+and count the area as left unchanged. Never use
 checkout, restore, stash, or reset on a file with pre-existing changes.
 
 Changes stay in the working tree: no commits, pushes, branches, or history
