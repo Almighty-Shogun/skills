@@ -106,8 +106,8 @@ npx skills add Almighty-Shogun/skills --skill commit --skill shogun-nuget
 
 Some skills hand work to others, so install those with them: `create-pr` needs
 `commit`; `release` needs `commit` and `release-notes`; `merge-pr` needs
-`review-pr`; `respond-pr` and `fix-pr` follow the resolution rules of
-`review-pr`.
+`review-pr`; `respond-pr` needs `commit` and `review-pr`; `fix-pr` follows the
+resolution rules of `review-pr`.
 
 Pick the agent and the scope. Without `-g` the skills land in the current
 project rather than your home directory:
