@@ -27,25 +27,49 @@ tag, create version commits, or publish.
 
 Invocation is `/create-pr` in Claude Code and `$create-pr` in Codex. Read every
 `AGENTS.md` and `CLAUDE.md` that exists and follow all of them; when two
-conflict, ask which wins. Also read any pull request template
-(`.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/*`); its
-requirements override the default body, but skip boilerplate the repository
-does not require. Prefer the harness's own file and search tools over the shell
-snippets, ask confirmations through its confirmation mechanism, and write the
-body to its scratchpad or temp directory, never into the working tree.
+conflict, ask which wins. Also read any pull request template:
+`pull_request_template.md` in the root, `docs/`, or `.github/`, or a file in a
+`PULL_REQUEST_TEMPLATE/` folder in one of those, matching names
+case-insensitively. Its requirements override the default body, but skip
+boilerplate the repository does not require. Prefer the harness's own file and
+search tools over the shell snippets, ask confirmations through its
+confirmation mechanism, and write the body to its scratchpad or temp directory,
+never into the working tree.
 
 Add no attribution trailers or generated-by footers unless an instruction file
 asks for them. If the harness cannot invoke one skill from another, read
-`../commit/SKILL.md` and follow it inline.
+`../commit/SKILL.md` and follow it inline; if neither works, stop and say that
+`commit` is missing.
 
 ## 1. Resolve the repository
 
 Use the current Git repository; outside one, inspect child directories with an
-`origin` remote and ask which to use. Derive `<dir>`, `<slug>`, `<repo-name>`,
-and `<default-branch>` (falling back to `main`). Run every git command as
-`git -C <dir> ...` and every GitHub command with `--repo <slug>`. Run
-`git -C <dir> fetch origin "<default-branch>"` once, then compare against
-`origin/<default-branch>` everywhere, never the local `<default-branch>`.
+`origin` remote and ask which to use. Set `<dir>` to
+`git rev-parse --show-toplevel`, `<repo-name>` to its folder name, and
+`<origin-slug>` to the `owner/name` of `origin`, then run
+`gh repo view <origin-slug> --json isFork,parent`. When `origin` is a fork, the
+pull request goes to the parent: `<repo-slug>` is the parent's `owner/name`
+and `<head>` is `<owner>:<branch>`, with `<owner>` from `<origin-slug>`.
+Otherwise `<repo-slug>` is `<origin-slug>` and `<head>` is `<branch>`.
+
+Run every git command as `git -C <dir> ...` and every `gh pr` command with
+`--repo <repo-slug>`. Read `<default-branch>` first:
+
+```bash
+gh repo view <repo-slug> --json nameWithOwner,defaultBranchRef
+```
+
+Only when gh cannot answer, fall back to
+`git -C <dir> symbolic-ref --short refs/remotes/origin/HEAD` without its
+`origin/` prefix. Then set `<base>` once. When `origin` is not a fork, run
+`git -C <dir> fetch origin "<default-branch>"`; `<base>` is
+`origin/<default-branch>`. For a fork, use an existing remote whose URL points
+at `<repo-slug>`: fetch `<default-branch>` from it, and `<base>` is
+`<remote>/<default-branch>`. With no such remote, run
+`git -C <dir> fetch https://github.com/<repo-slug>.git "<default-branch>"`
+and set `<base>` right away to the SHA from `git -C <dir> rev-parse FETCH_HEAD`.
+Compare against `<base>` everywhere, never the local `<default-branch>`;
+`gh pr create --base` still takes the bare `<default-branch>`.
 
 Read the instruction files, preferring hints under `## Pull Request`,
 `## Pull Requests`, or `## Git And PR Safety`:
@@ -61,7 +85,6 @@ Inspect the state:
 git -C <dir> status --short --branch
 git -C <dir> diff --stat
 git -C <dir> diff --cached --stat
-gh repo view <slug> --json nameWithOwner,defaultBranchRef
 ```
 
 ## 2. Prepare the branch
@@ -82,37 +105,40 @@ file allows others.
 
 The prefix sets the title kind and is expensive to change after a push, so
 choose it deliberately. `fix/` and `feat/` are the default pair. Prefer `fix/`
-whenever something was actually wrong, even in a removal that corrects false
-documentation, and `feat/` whenever anything was added, however small. A runtime
-fix that also updates docs stays `fix/`. When two prefixes are both defensible,
+whenever something was actually wrong, even in a code removal that makes the
+docs true, and `feat/` whenever anything was added, however small. A runtime
+fix that also updates docs stays `fix/`; a documentation-only change stays
+`docs/`, even when it corrects an error. When two prefixes are both defensible,
 or the summary cannot be inferred confidently, ask **before** creating the
 branch.
 
-Name the actual change, never something vague like `api-surface`. Reject names
-containing whitespace, `..`, `@{`, `//`, a leading `-`, a trailing `/`, or
-`.lock`, and protected names such as `main`, `master`, `development`, or
-`release`.
+Name the actual change, never something vague like `api-surface`. Reject a
+name that `git -C <dir> check-ref-format --branch "<branch>"` refuses, and
+protected names such as `main`, `master`, `development`, or `release`.
 
-When reusing a branch or a candidate exists, check its ancestry:
+Once the branch is known, check for an open pull request with
+`gh pr view "<head>" --repo <repo-slug> --json number,url,state,title`. If its
+`state` is `OPEN`, report it and stop; updating it belongs to `respond-pr`,
+`fix-pr`, or `delegate-task` for the change, and to `commit` for its commits
+and push. A merged or closed one does not block.
 
 ```bash
-git -C <dir> merge-base "origin/<default-branch>" HEAD
-git -C <dir> rev-list --count "origin/<default-branch>..HEAD"
-git -C <dir> rev-list --count "HEAD..origin/<default-branch>"
+git -C <dir> rev-parse --verify "refs/heads/<branch>"
+git -C <dir> ls-remote --heads origin "refs/heads/<branch>"
+```
+
+When `<branch>` already exists, check the ancestry of `<ref>`: `HEAD` when it
+is the current branch, else `refs/heads/<branch>`, else, for a remote-only
+branch, `origin/<branch>` after `git -C <dir> fetch origin "<branch>"`.
+
+```bash
+git -C <dir> merge-base "<base>" "<ref>"
+git -C <dir> rev-list --count "<base>..<ref>"
+git -C <dir> rev-list --count "<ref>..<base>"
 ```
 
 If it looks based on another feature branch or carries unrelated history,
 report it and ask; never rebase or merge automatically.
-
-Once the branch is known, check for an open pull request with
-`gh pr view "<branch>" --repo <slug> --json number,url,state,title`. If its
-`state` is `OPEN`, report it and stop; updating it belongs to `respond-pr`,
-`fix-pr`, or the development workflow. A merged or closed one does not block.
-
-```bash
-git -C <dir> rev-parse --verify "<branch>"
-git -C <dir> ls-remote --heads origin "<branch>"
-```
 
 If the current branch is `<branch>`, continue. If it exists locally or remotely
 and is not current, ask whether to switch to it, pick another name, or cancel.
@@ -124,9 +150,9 @@ in place on the current `HEAD`; never stash or switch through another base.
 The pull request covers the whole branch delta, not just uncommitted changes:
 
 ```bash
-git -C <dir> log --oneline "origin/<default-branch>..HEAD"
-git -C <dir> diff --stat "origin/<default-branch>...HEAD"
-git -C <dir> diff "origin/<default-branch>...HEAD"
+git -C <dir> log --oneline "<base>..HEAD"
+git -C <dir> diff --stat "<base>...HEAD"
+git -C <dir> diff "<base>...HEAD"
 git -C <dir> diff
 git -C <dir> diff --cached
 ```
@@ -152,23 +178,26 @@ This PR should not include:
 ## 4. Hand off to the commit skill
 
 Run the `commit` skill with `--dir <dir>` and the step 3 file scope as its
-paths; it owns staging, grouping, validation, commits, and the push. Never stage
-ad hoc, never use `git add .` or `git add -A`, and never push a second time
-yourself. Then verify:
+paths, and tell it the push target is `origin`; it owns staging, grouping,
+validation, commits, and the push. Never run it without paths: when nothing in
+the scope is uncommitted, still pass the branch delta's files, so it commits
+nothing and only offers the push. Never stage ad hoc, never use `git add .` or
+`git add -A`, and never push a second time yourself. Then verify:
 
 ```bash
 git -C <dir> status --short --branch
-git -C <dir> ls-remote --heads origin "<branch>"
-git -C <dir> log --oneline origin/<default-branch>..HEAD
-git -C <dir> diff --stat origin/<default-branch>...HEAD
+git -C <dir> ls-remote --heads origin "refs/heads/<branch>"
+git -C <dir> log --oneline "<base>..HEAD"
+git -C <dir> diff --stat "<base>...HEAD"
 ```
 
 When nothing is left to commit but the branch has unpushed commits, `commit`
 still offers the push, lists those commits, and always asks for it. Continue
 only once the commit skill has finished and `origin/<branch>` matches the local
-`HEAD`. If the user declined the push, stop: the pull request cannot be opened
-from an unpushed branch. With no commits ahead of the base, stop: there is
-nothing to open.
+`HEAD`. On any mismatch, stop and report the actual cause, such as a declined
+push, a failed check or commit that left groups unpushed, or a push to another
+remote: the pull request cannot be opened from an unpushed branch. With no
+commits ahead of the base, stop: there is nothing to open.
 
 ## 5. Write the title and body
 
@@ -176,7 +205,8 @@ Repository style and templates take precedence. Otherwise:
 
 - Title: `<Kind>: <short human summary>`, mapping `fix/` → `Bugfix`,
   `feat/` → `Feature`, `improvement/` → `Improvement`, `chore/` → `Chore`,
-  `docs/` → `Docs`. No Conventional Commit prefixes. If the full diff clearly
+  `docs/` → `Docs`. For a prefix an instruction file allows, take the kind from
+  that file, or ask. No Conventional Commit prefixes. If the full diff clearly
   contradicts the branch prefix, flag the mismatch and ask; never rename a
   pushed branch automatically.
 - Body: two or three short paragraphs. The first starts with `This PR
@@ -188,8 +218,11 @@ Repository style and templates take precedence. Otherwise:
   headings, checklists, or test sections unless asked, and no remarks about the
   pull request being scoped or focused.
 
-Write the body to `<scratchpad>/<repo-name>-pr-<branch-slug>.md`. Show the base,
-head, commits, files, title, and exact body, without the shell command, and ask:
+Write the body to `<scratchpad>/<repo-name>-pr-<branch-slug>.md`, where
+`<branch-slug>` is `<branch>` with each `/` replaced by `-`. Show the target
+repository (`<repo-slug>`), base, head, commits, files, title, exact body, and
+any reviewers, labels, or draft state an instruction file sets, without the
+shell command, and ask:
 
 ```text
 Do you want me to create this PR?
@@ -200,15 +233,16 @@ Revise and show it again when edits are requested.
 ## 6. Create the PR
 
 After approval, re-check that no open pull request appeared meanwhile
-(`gh pr view "<branch>" --repo <slug> --json url,state`); if its `state` is
+(`gh pr view "<head>" --repo <repo-slug> --json url,state`); if its `state` is
 `OPEN`, report it and stop. Otherwise:
 
 ```bash
-gh pr create --repo <slug> --base "<default-branch>" --head "<branch>" \
+gh pr create --repo <repo-slug> --base "<default-branch>" --head "<head>" \
     --title "<title>" --body-file "<body-file>"
 ```
 
-Report the URL. Do not merge.
+Add `--reviewer`, `--label`, or `--draft` for what step 5 showed. Report the
+URL. Do not merge.
 
 ## Optional overrides
 
@@ -217,9 +251,9 @@ A repository's `AGENTS.md` or `CLAUDE.md` may override defaults under
 
 | Hint | Affects |
 |---|---|
-| Allowed branch prefixes beyond the five defaults | step 2 |
-| Default base branch, when not the GitHub-reported default | steps 1, 2, 4 |
+| Allowed branch prefixes beyond the five defaults | steps 2, 5 |
+| Default base branch, when not the GitHub-reported default | steps 1-6 |
 | Repository-specific file grouping | step 3 |
 | PR title and body style, required sections, or templates | step 5 |
 | Whether attribution trailers are wanted | steps 4, 5 |
-| Reviewers, labels, or draft-by-default policy | step 6 |
+| Reviewers, labels, or draft-by-default policy | steps 5, 6 |
