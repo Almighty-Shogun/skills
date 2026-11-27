@@ -22,38 +22,54 @@ GitHub mutation (a thread reply, a PR-level reply, resolving a thread) needs
 explicit approval of the exact text. Commits and pushes go through the `commit`
 skill; this skill never commits, pushes, amends, rebases, or creates or deletes
 branches.
-Protect unrelated uncommitted work.
+
+Protect unrelated uncommitted work: before the first edit, record
+`git -C <dir> status --short` and the diff of each path it lists, and ask before
+editing one of those paths. Validation and the commit handoff then cover only
+this skill's hunks.
+
+Read every `AGENTS.md` and `CLAUDE.md` that applies and follow them; they
+override this skill's defaults, and when two conflict, ask which wins. Give
+each sub-agent the rules it needs.
 
 ## Resolve the PR
 
-Use the PR URL when given, else the number, resolved per `review-pr`, else the
-pull request for the current branch. If none resolves, or several plausibly
-could, ask; never guess. Follow the repository and PR resolution conventions of
-`review-pr`.
+Use the PR URL when given, else the number, else the pull request for the
+current branch, resolving `<dir>`, `<origin-slug>`, and `<slug>` as steps 1 and
+2 of `review-pr` do (`../review-pr/SKILL.md`); if that file cannot be read,
+stop and say that `review-pr` is missing. If none resolves, or several
+plausibly could, ask; never guess.
 
 Check the head first, before any edit and before any local reproduction or
 verification:
 
 ```bash
 gh pr view <number> --repo <slug> \
-    --json headRefName,headRefOid,headRepository,headRepositoryOwner
+    --json state,headRefName,headRefOid,headRepository,headRepositoryOwner
 ```
 
-Require that the current branch is `headRefName`, `HEAD` is `headRefOid`, and
+Require that the current branch is `headRefName`, `HEAD` is `headRefOid` or
+only adds unpushed commits on top of it (after `git -C <dir> fetch origin`,
+`git -C <dir> merge-base --is-ancestor <headRefOid> HEAD` exits 0), and
 `<origin-slug>` is the head repository (`headRepositoryOwner.login` and
-`headRepository.name`). A fork pull request passes only when `origin` is that
-fork, as when its author runs this; `<slug>` is then the fork's parent, per
-`review-pr`. Otherwise stop and ask before any edit; never run `gh pr checkout`
+`headRepository.name`, compared case-insensitively). A fork pull request passes
+only when `origin` is that fork, as when its author runs this; `<slug>` is then
+the fork's parent, unless a URL names a pull request inside the fork. Otherwise
+ask **This checkout is not the PR head. Switch to it, or continue read-only?**,
+and run the head check again before any edit; never run `gh pr checkout`
 automatically. Reading and verifying feedback may still proceed read-only, but
 from CI evidence and `gh pr diff`, never from local runs on a checkout that is
 not the PR head.
 
+Unless `state` is `OPEN`, change nothing: offer only replies and resolutions
+that claim no change.
+
 ## Collect and group feedback
 
 Collect unresolved review threads, actionable review comments, and PR-level
-comments that clearly request a change. Skip resolved threads, bare approvals,
-bot chatter, CI notifications, and conversation, reading them only to
-understand an unresolved item.
+comments that clearly request a change or report a defect. Skip resolved
+threads, bare approvals, bot chatter, CI notifications, and conversation,
+reading them only to understand an unresolved item.
 
 No `gh` subcommand exposes thread state, so read threads through GraphQL
 (`<owner>` and `<name>` from `<slug>`); PR-level comments and review bodies
@@ -66,13 +82,16 @@ gh api graphql --paginate -f owner=<owner> -f name=<name> -F number=<number> \
     repository(owner: $owner, name: $name) { pullRequest(number: $number) {
       reviewThreads(first: 100, after: $endCursor) {
         pageInfo { hasNextPage endCursor }
-        nodes { id isResolved path line
+        nodes { id isResolved isOutdated path line originalLine
           comments(first: 50) { nodes { databaseId author { login } body } } } }
     } } }'
 ```
 
 Comments past the first 50 in a thread are not needed to reply to or resolve
-it; the thread `id` and its opening comments carry the request.
+it; the thread `id` and its opening comments carry the request. An outdated
+thread (`isOutdated`, `line` null) points at code that later commits changed:
+show it as `<path>:<originalLine> (outdated)`, and check the current code
+before classifying it, since it may already be addressed.
 
 Classify each item as actionable, suggestion, question, incorrect or
 incompatible, or already addressed. Group comments that ask for the same
@@ -81,7 +100,8 @@ resolutions map back correctly.
 
 ## Let the user choose
 
-Show a numbered list before touching code:
+When no unresolved actionable feedback remains, say so, show the final summary,
+and stop. Otherwise show a numbered list before touching code:
 
 ```text
 1. Reuse the existing date parser
@@ -133,10 +153,10 @@ Reason not applied: <only when applicable>
 ```
 
 Run the relevant local checks. Then a fresh validation sub-agent compares the
-original request with the actual diff, checks tests and regressions, and judges
-whether the request was genuinely addressed, without relying on the
-implementer's account. A concrete problem gets one targeted fix and another
-validation; avoid open-ended repair loops.
+original request with the actual diff, less any recorded pre-run hunks, checks
+tests and regressions, and judges whether the request was genuinely addressed,
+without relying on the implementer's account. A concrete problem gets one
+targeted fix and another validation; avoid open-ended repair loops.
 
 ## Replies and resolution
 
@@ -164,18 +184,24 @@ declined requests, do not wait. A reply that claims a change ("Updated
 this...") waits until the change is pushed and the PR head contains it:
 
 1. Record `HEAD`, then offer the `commit` handoff with `--dir <dir>` and the
-   changed files as its paths; it owns grouping, commits, and the push under
-   its own confirmations. Continue only when `HEAD` has moved and
-   `git -C <dir> status --short -- <paths>` is clean; otherwise nothing was
-   committed, so handle it as in step 3.
+   changed files as its paths, naming any recorded pre-run hunks in them as the
+   user's, to leave out; it owns grouping, commits, and the push under its own
+   confirmations. When the harness cannot invoke one skill from another, read
+   `../commit/SKILL.md` and follow it inline; if neither works, stop and say
+   that `commit` is missing.
 2. Re-read `headRefOid` with `gh pr view`, run `git -C <dir> fetch origin` so
-   later pushes by others are present, then check
-   `git -C <dir> merge-base --is-ancestor HEAD <headRefOid>`. `HEAD` is the
-   last commit `commit` created, so one check covers several commits. Post only
-   when it passes.
-3. If the user declines the commit or the push, or the check fails, end the run
-   and report each waiting reply in full, its thread and exact text. Approval
-   does not carry into a later run, which shows the text for approval again.
+   later pushes by others are present, then check that the head contains the
+   change: `git -C <dir> diff <headRefOid> -- <paths>` shows nothing beyond
+   recorded pre-run hunks, and `git -C <dir> status --short -- <paths>` lists
+   no untracked (`??`) path, which that diff would miss. Post only when it
+   passes.
+3. If the user declines the commit or the push, or the check fails, end the
+   run. Nothing, or only part, may have been committed and pushed, so list the
+   commits created since the recorded `HEAD`
+   (`git -C <dir> log --oneline <recorded>..HEAD`) and whether they were
+   pushed, and report each waiting reply in full, its thread and exact text.
+   Approval does not carry into a later run, which shows the text for approval
+   again.
 
 Post a thread reply with the GraphQL `addPullRequestReviewThreadReply` mutation
 (`pullRequestReviewThreadId` is the thread `id`), or with
@@ -202,5 +228,5 @@ Waiting on push: 1
 ```
 
 Also name any unresolved conflict, out-of-scope request awaiting a decision, or
-validation failure that remains, and list each reply waiting on the push with
-its thread and exact text.
+validation failure that remains, list any commits created but not pushed, and
+list each reply waiting on the push with its thread and exact text.
