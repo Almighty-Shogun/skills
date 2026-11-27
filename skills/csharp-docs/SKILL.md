@@ -328,7 +328,9 @@ Build the relevant project after writing docs with
 project, and treat these as documentation failures, not tolerable warnings:
 `CS0419`, `CS1570`-`CS1574`, `CS1580`, `CS1581`, `CS1584`, `CS1587`,
 `CS1589`-`CS1592`, `CS1658`, `CS1710`-`CS1712`, `CS1723`, `CS1734`, and
-`CS1735`. Report doc codes the project suppresses, such as `NoWarn` `1591`.
+`CS1735`. Count these as failures only in the target files, and report how
+many fall outside them. Exclude `CS1591` when the project does not document
+its members. Report doc codes the project suppresses, such as `NoWarn` `1591`.
 Inspect the generated XML when cref resolution is in doubt. A clean build does
 not prove a sentence is true. When the build fails for reasons unrelated to
 docs, report it and say the compiler doc checks were not obtained.
